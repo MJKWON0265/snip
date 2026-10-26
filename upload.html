@@ -52,6 +52,27 @@
     }
     .drop b { font-size: 19px; font-weight: 500; }
     .drop small { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+    /* 텍스트 붙여넣기 칸 */
+    .paste {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .paste textarea {
+      width: 100%;
+      min-height: 280px;
+      padding: 20px;
+      border: 1.5px solid var(--line);
+      background: #fff;
+      font-family: var(--kr);
+      font-size: 16px;
+      line-height: 1.8;
+      resize: vertical;
+    }
+    .paste textarea:focus { outline: none; border-color: var(--orange); }
+    .paste small { font-family: var(--mono); font-size: 13px; color: var(--muted); text-align: right; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -68,15 +89,21 @@
       <p class="page-sub">피드백 문서, 결재 문서처럼 지금 확인해야 하는 문서 하나면 돼요.</p>
 
       <div class="tabs">
-        <button type="button" class="on">파일 올리기</button>
-        <button type="button">텍스트 붙여넣기</button>
+        <button type="button" class="on" data-tab="drop">파일 올리기</button>
+        <button type="button" data-tab="paste">텍스트 붙여넣기</button>
       </div>
 
-      <div class="drop">
+      <div class="drop" id="drop">
         <div class="file-icon" aria-hidden="true"></div>
         <b>파일을 여기로 끌어다 놓거나</b>
         <button type="button" class="btn btn-ghost">내 컴퓨터에서 고르기</button>
         <small>[지원 형식: 워드, PDF, 구글 문서 등]</small>
+      </div>
+
+      <div class="paste" id="paste" hidden>
+        <label for="paste-text" class="sr-only">읽을 문서 내용</label>
+        <textarea id="paste-text" placeholder="읽을 문서 내용을 여기에 붙여넣거나 직접 써 주세요."></textarea>
+        <small id="count">0자</small>
       </div>
 
       <div class="actions">
@@ -85,6 +112,27 @@
       </div>
     </div>
   </main>
+
+  <script>
+    // 탭을 누르면 해당 칸만 보이게 바꿔요.
+    const tabs = document.querySelectorAll('.tabs button');
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => {
+          const on = t === tab;
+          t.classList.toggle('on', on);
+          document.getElementById(t.dataset.tab).hidden = !on;
+        });
+        if (tab.dataset.tab === 'paste') document.getElementById('paste-text').focus();
+      });
+    });
+
+    // 붙여넣은 글자 수를 세어 보여줘요.
+    const text = document.getElementById('paste-text');
+    text.addEventListener('input', () => {
+      document.getElementById('count').textContent = text.value.length.toLocaleString() + '자';
+    });
+  </script>
 
 </body>
 </html>
