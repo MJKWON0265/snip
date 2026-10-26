@@ -1,0 +1,9 @@
+{
+  "name": "snip",
+  "private": true,
+  "type": "module",
+  "description": "문장을 드래그하면 관련 기획안 속 참고할 부분을 찾아주는 서비스",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0"
+  }
+}

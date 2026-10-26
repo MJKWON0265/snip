@@ -65,7 +65,9 @@
       border-left: 4px solid var(--orange);
       padding: 12px 14px;
     }
-    .note { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .note { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .note.error { color: #b3261e; }
+    .cards, #examples { display: flex; flex-direction: column; gap: 16px; }
 
     /* 오른쪽 결과 칸 */
     .results {
@@ -138,9 +140,11 @@
         </div>
 
         <div id="found" hidden>
-          <div class="label">이 문장과 관련된 부분 3곳</div>
+          <div class="label">이 문장과 관련된 부분</div>
           <blockquote class="picked" id="picked"></blockquote>
-          <div class="note">예시 카드예요. AI를 연결하면 진짜 내용이 들어가요.</div>
+          <div class="note" id="status">AI가 관련 부분을 찾는 중이에요...</div>
+          <div id="cards" class="cards"></div>
+          <div id="examples" hidden>
           <div class="card">
             <div class="file">2024 온보딩 개선안_v3.docx</div>
             <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
@@ -161,6 +165,7 @@
             <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
             <div class="why">왜 관련 있나요: [이유 한 줄]</div>
             <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+          </div>
           </div>
         </div>
       </aside>
@@ -232,7 +237,78 @@
       document.getElementById('empty').hidden = true;
       document.getElementById('found').hidden = false;
       if (window.innerWidth <= 900) document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      askAI(picked.text);
     });
+
+    // 4) 백엔드(/api/find)에 주문을 넣고, 돌아온 결과로 카드를 그려요.
+    const statusEl = document.getElementById('status');
+    const cardsEl = document.getElementById('cards');
+    const examplesEl = document.getElementById('examples');
+
+    async function askAI(sentence) {
+      statusEl.className = 'note';
+      statusEl.textContent = 'AI가 관련 부분을 찾는 중이에요... (10~20초 걸릴 수 있어요)';
+      cardsEl.innerHTML = '';
+      examplesEl.hidden = true;
+      findBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/find', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sentence,
+            docTitle: document.getElementById('doc-title').textContent,
+            docText: bodyEl.innerText,
+          }),
+        });
+        const isJson = (res.headers.get('content-type') || '').includes('application/json');
+        if (!isJson) throw new Error('no-backend');
+        const data = await res.json();
+        if (!res.ok) {
+          statusEl.className = 'note error';
+          statusEl.textContent = data.error || '찾는 중에 문제가 생겼어요.';
+          return;
+        }
+        if (!data.results.length) {
+          statusEl.textContent = '연결된 기획안에서 관련 있는 부분을 찾지 못했어요. 다른 문장을 골라 보세요.';
+          return;
+        }
+        statusEl.textContent = '관련 부분 ' + data.results.length + '곳을 찾았어요.';
+        data.results.forEach((r) => cardsEl.appendChild(makeCard(r)));
+      } catch (e) {
+        // 내 컴퓨터에서 파일로 열었거나 미리보기에서는 백엔드가 없어서 예시 카드를 보여줘요.
+        statusEl.textContent = '아직 AI(백엔드)가 연결되지 않은 곳에서 열려서 예시 카드를 보여드려요.';
+        examplesEl.hidden = false;
+      } finally {
+        findBtn.disabled = false;
+      }
+    }
+
+    function makeCard(r) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const add = (tag, cls, text) => {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        el.textContent = text;
+        card.appendChild(el);
+        return el;
+      };
+      add('div', 'file', r.file);
+      add('blockquote', '', r.excerpt);
+      add('div', 'why', '왜 관련 있나요: ' + r.why);
+      const tip = add('div', 'tip', '');
+      const b = document.createElement('b');
+      b.textContent = '이렇게 참고해 보세요';
+      tip.append(b, document.createElement('br'), r.tip);
+      const link = add('a', 'open', '원본에서 이 부분 보기 →');
+      link.href = 'original.html';
+      link.addEventListener('click', () => {
+        try { sessionStorage.setItem('snip-hit', JSON.stringify(r)); } catch (e) {}
+      });
+      return card;
+    }
   </script>
 
 </body>
