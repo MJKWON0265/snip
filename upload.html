@@ -108,7 +108,7 @@
 
       <div class="actions">
         <a class="btn btn-ghost" href="folder.html">← 이전</a>
-        <a class="btn" href="reader.html">문서 열기 →</a>
+        <a class="btn" href="reader.html" id="open">문서 열기 →</a>
       </div>
     </div>
   </main>
@@ -131,6 +131,20 @@
     const text = document.getElementById('paste-text');
     text.addEventListener('input', () => {
       document.getElementById('count').textContent = text.value.length.toLocaleString() + '자';
+    });
+    // "문서 열기"를 누르면 붙여넣은 글을 잠깐 저장해 두고 읽기 화면에서 꺼내 써요.
+    document.getElementById('open').addEventListener('click', () => {
+      const pasteOn = !document.getElementById('paste').hidden;
+      const value = text.value.trim();
+      try {
+        if (pasteOn && value) {
+          const firstLine = value.split('\n')[0].trim();
+          const title = firstLine.length > 30 ? firstLine.slice(0, 30) + '…' : firstLine;
+          sessionStorage.setItem('snip-doc', JSON.stringify({ title, text: value }));
+        } else {
+          sessionStorage.removeItem('snip-doc');
+        }
+      } catch (e) {}
     });
   </script>
 
