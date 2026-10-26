@@ -51,7 +51,14 @@
       color: var(--muted);
       border-bottom: 1px solid var(--line);
     }
+    .folder-list { max-height: 360px; overflow-y: auto; }
     .folder {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      font-family: var(--kr);
+      color: var(--ink);
       display: flex;
       align-items: center;
       gap: 14px;
@@ -61,6 +68,9 @@
       cursor: pointer;
     }
     .folder:last-child { border-bottom: none; }
+    .folder:hover { background: #fff; }
+    [hidden] { display: none !important; }
+    button.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
     .folder .icon {
       width: 22px;
       height: 17px;
@@ -98,7 +108,7 @@
 
   <header>
     <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
-    <div class="meta">달수님 · <a href="index.html">로그아웃</a></div>
+    <div class="meta"><span id="user-name"></span> · <a href="index.html" id="logout">로그아웃</a></div>
   </header>
 
   <main class="frame">
@@ -108,38 +118,156 @@
 
       <div class="scope">
         <label class="box">
-          <input type="radio" name="scope" checked>
+          <input type="radio" name="scope" value="folder" checked>
           <div><b>폴더 하나 고르기 (추천)</b><span>빠르고 정확해요</span></div>
         </label>
         <label class="box">
-          <input type="radio" name="scope">
-          <div><b>드라이브 전체</b><span>최근 파일 [N]개까지만 읽어요</span></div>
+          <input type="radio" name="scope" value="all">
+          <div><b>드라이브 전체</b><span>최근 문서 30개까지만 읽어요</span></div>
         </label>
       </div>
 
-      <div class="box">
+      <div class="box" id="folder-box">
         <label class="search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
           <span class="sr-only">폴더 이름 검색</span>
-          <input type="text" placeholder="폴더 이름으로 찾기 (예: 2025 기획안)">
+          <input type="text" id="folder-search" placeholder="폴더 이름으로 찾기 (예: 2025 기획안)">
         </label>
-        <div class="path">내 드라이브 &gt; 업무</div>
-        <div class="folder"><span class="icon"></span>2024 기획안</div>
-        <div class="folder selected"><span class="icon"></span>2025 기획안<span class="pick">선택됨</span></div>
-        <div class="folder"><span class="icon"></span>피드백 모음</div>
+        <div class="path" id="folder-status">내 드라이브의 폴더를 불러오는 중이에요...</div>
+        <div id="folder-list" class="folder-list"></div>
       </div>
 
-      <div class="progress">
-        <b>문서 읽는 중... 32개 중 12개 완료</b>
-        <div class="bar"><div></div></div>
-        <span>처음 한 번만 기다리면 돼요. 그동안 다음 화면으로 넘어가도 괜찮아요.</span>
+      <div class="progress" id="progress" hidden>
+        <b id="progress-text">문서 읽는 중...</b>
+        <div class="bar"><div id="progress-bar"></div></div>
+        <span id="progress-sub">구글 문서와 구글 프레젠테이션을 읽어요. 처음 한 번만 기다리면 돼요.</span>
       </div>
 
       <div class="actions">
-        <a class="btn" href="upload.html">다음: 읽을 문서 넣기 →</a>
+        <button type="button" class="btn" id="connect" disabled>이 폴더 읽어 오기</button>
+        <a class="btn" href="upload.html" id="next" hidden>다음: 읽을 문서 넣기 →</a>
       </div>
     </div>
   </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
+  <script>
+    const session = SnipGoogle.requireSession();
+    if (session) document.getElementById('user-name').textContent = session.name + '님';
+    document.getElementById('logout').addEventListener('click', () => SnipGoogle.signOut());
+
+    const listEl = document.getElementById('folder-list');
+    const statusEl = document.getElementById('folder-status');
+    const searchEl = document.getElementById('folder-search');
+    const connectBtn = document.getElementById('connect');
+    const nextBtn = document.getElementById('next');
+    let selected = null;
+
+    function scope() {
+      return document.querySelector('input[name="scope"]:checked').value;
+    }
+
+    function updateButton() {
+      if (scope() === 'all') {
+        connectBtn.textContent = '드라이브 전체 읽어 오기';
+        connectBtn.disabled = false;
+      } else {
+        connectBtn.textContent = selected ? '"' + selected.name + '" 읽어 오기' : '폴더를 골라 주세요';
+        connectBtn.disabled = !selected;
+      }
+    }
+
+    // 폴더 목록을 그려요.
+    async function loadFolders() {
+      statusEl.textContent = '내 드라이브의 폴더를 불러오는 중이에요...';
+      listEl.innerHTML = '';
+      try {
+        const folders = await SnipGoogle.listFolders(searchEl.value.trim());
+        statusEl.textContent = folders.length
+          ? '최근에 바뀐 순서로 보여드려요'
+          : '폴더를 찾지 못했어요. 다른 이름으로 검색해 보세요.';
+        folders.forEach((f) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'folder' + (selected && selected.id === f.id ? ' selected' : '');
+          const icon = document.createElement('span');
+          icon.className = 'icon';
+          const name = document.createElement('span');
+          name.textContent = f.name;
+          btn.append(icon, name);
+          btn.addEventListener('click', () => {
+            selected = f;
+            listEl.querySelectorAll('.folder').forEach((el) => el.classList.remove('selected'));
+            btn.classList.add('selected');
+            updateButton();
+          });
+          listEl.appendChild(btn);
+        });
+      } catch (e) {
+        statusEl.textContent = e.message;
+      }
+    }
+
+    let timer = null;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(loadFolders, 400);
+    });
+    document.querySelectorAll('input[name="scope"]').forEach((r) =>
+      r.addEventListener('change', () => {
+        document.getElementById('folder-box').hidden = scope() === 'all';
+        updateButton();
+      }),
+    );
+
+    // 고른 곳의 문서를 하나씩 읽어 와요.
+    connectBtn.addEventListener('click', async () => {
+      const source = scope() === 'all'
+        ? { folderId: null, label: '드라이브 전체 (최근 문서)' }
+        : { folderId: selected.id, label: selected.name };
+      const progress = document.getElementById('progress');
+      const text = document.getElementById('progress-text');
+      const bar = document.getElementById('progress-bar');
+      progress.hidden = false;
+      bar.style.width = '0%';
+      connectBtn.disabled = true;
+      nextBtn.hidden = true;
+      try {
+        const lib = await SnipGoogle.buildLibrary(source, (done, total, name) => {
+          bar.style.width = total ? Math.round((done / total) * 100) + '%' : '100%';
+          text.textContent = total
+            ? '문서 읽는 중... ' + total + '개 중 ' + done + '개 완료' + (name ? ' · ' + name : '')
+            : '읽을 문서를 찾는 중...';
+        });
+        if (!lib.docs.length) {
+          text.textContent = '여기에는 읽을 수 있는 문서가 없어요. 구글 문서나 구글 프레젠테이션이 있는 폴더를 골라 주세요.';
+          bar.style.width = '0%';
+        } else {
+          text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (lib.skipped ? ' (' + lib.skipped + '개는 너무 크거나 읽지 못해 건너뛰었어요)' : '');
+          nextBtn.hidden = false;
+        }
+      } catch (e) {
+        text.textContent = e.message;
+      } finally {
+        updateButton();
+      }
+    });
+
+    // 이미 읽어 둔 폴더가 있으면 바로 다음으로 갈 수 있게 해요.
+    const existing = SnipGoogle.getLibrary();
+    if (existing && existing.docs && existing.docs.length) {
+      const progress = document.getElementById('progress');
+      progress.hidden = false;
+      document.getElementById('progress-bar').style.width = '100%';
+      document.getElementById('progress-text').textContent =
+        '이미 연결된 곳: ' + existing.source + ' (문서 ' + existing.docs.length + '개). 다시 고르면 새로 읽어 와요.';
+      nextBtn.hidden = false;
+    }
+
+    if (session) loadFolders();
+    updateButton();
+  </script>
 
 </body>
 </html>

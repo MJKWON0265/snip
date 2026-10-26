@@ -69,6 +69,7 @@
     .side button.on { border: 2px solid var(--orange); }
     .doc .para { font-size: 17px; line-height: 1.85; color: var(--muted); word-break: keep-all; }
     .hit p { color: var(--ink); }
+    [hidden] { display: none !important; }
 
     @media (max-width: 900px) {
       .bar-top { flex-wrap: wrap; padding: 14px 20px; }
@@ -89,7 +90,7 @@
     <div class="bar-top">
       <a class="back" href="reader.html">← 읽던 문서로</a>
       <span class="name" id="file-name">2024 온보딩 개선안_v3.docx</span>
-      <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 열기</a>
+      <a class="btn btn-ghost" id="drive-link" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 열기</a>
     </div>
 
     <div class="split">
@@ -121,6 +122,8 @@
     try { hit = JSON.parse(sessionStorage.getItem('snip-hit')); } catch (e) {}
     if (hit && Array.isArray(hit.paragraphs)) {
       document.getElementById('file-name').textContent = hit.file;
+      if (hit.link) document.getElementById('drive-link').href = hit.link;
+      else document.getElementById('drive-link').hidden = true;
       const doc = document.getElementById('doc');
       doc.innerHTML = '';
       const where = document.createElement('span');

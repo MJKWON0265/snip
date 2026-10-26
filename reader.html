@@ -173,6 +173,8 @@
     </div>
   </main>
 
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
   <script>
     // 1) 문서 넣기 화면에서 붙여넣은 글이 있으면 그걸 보여줘요. 없으면 예시 문서를 그대로 둬요.
     let saved = null;
@@ -245,6 +247,13 @@
     const cardsEl = document.getElementById('cards');
     const examplesEl = document.getElementById('examples');
 
+    // 연결된 드라이브 문서가 있으면 함께 보내요. 없으면 주방이 예시 기획안을 써요.
+    function libraryForAI() {
+      const lib = SnipGoogle.getLibrary();
+      if (!lib || !lib.docs || !lib.docs.length) return null;
+      return lib.docs.map((d) => ({ id: d.id, name: d.name, link: d.link, paragraphs: d.paragraphs }));
+    }
+
     async function askAI(sentence) {
       statusEl.className = 'note';
       statusEl.textContent = 'AI가 관련 부분을 찾는 중이에요... (10~20초 걸릴 수 있어요)';
@@ -260,6 +269,7 @@
             sentence,
             docTitle: document.getElementById('doc-title').textContent,
             docText: bodyEl.innerText,
+            library: libraryForAI(),
           }),
         });
         const isJson = (res.headers.get('content-type') || '').includes('application/json');
@@ -271,7 +281,7 @@
           return;
         }
         if (!data.results.length) {
-          statusEl.textContent = '연결된 기획안에서 관련 있는 부분을 찾지 못했어요. 다른 문장을 골라 보세요.';
+          statusEl.textContent = '연결된 문서에서 관련 있는 부분을 찾지 못했어요. 다른 문장을 골라 보세요.';
           return;
         }
         statusEl.textContent = '관련 부분 ' + data.results.length + '곳을 찾았어요.';

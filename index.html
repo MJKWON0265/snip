@@ -261,7 +261,7 @@
       <div class="logo-mark">S</div>
       snip
     </a>
-    <a class="btn" href="folder.html">Google로 시작하기</a>
+    <button type="button" class="btn js-login">Google로 시작하기</button>
   </header>
 
   <main class="frame">
@@ -279,8 +279,8 @@
     <section class="start">
       <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>드라이브 속 놓친 기획안까지 찾아<br>참고할 부분을 보여드려요.</p>
       <div>
-        <a class="btn btn-lg" href="folder.html"><span class="g">G</span>Google로 시작하기</a>
-        <p class="note">구글 계정으로 바로 시작해요</p>
+        <button type="button" class="btn btn-lg js-login"><span class="g">G</span>Google로 시작하기</button>
+        <p class="note" id="login-note">구글 계정으로 바로 시작해요</p>
       </div>
     </section>
 
@@ -329,6 +329,43 @@
     </section>
 
   </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
+  <script>
+    // "Google로 시작하기"를 누르면 구글 로그인 창을 띄우고, 성공하면 폴더 연결 화면으로 가요.
+    const note = document.getElementById('login-note');
+    const buttons = document.querySelectorAll('.js-login');
+
+    function showError(message) {
+      note.textContent = message;
+      note.style.color = '#b3261e';
+    }
+
+    if (new URLSearchParams(location.search).get('login') === 'needed') {
+      showError('먼저 구글로 로그인해 주세요.');
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (SnipGoogle.getSession()) {
+          location.href = 'folder.html';
+          return;
+        }
+        buttons.forEach((b) => (b.disabled = true));
+        note.style.color = '';
+        note.textContent = '구글 로그인 창을 여는 중이에요...';
+        try {
+          await SnipGoogle.signIn();
+          location.href = 'folder.html';
+        } catch (e) {
+          showError(e.message);
+        } finally {
+          buttons.forEach((b) => (b.disabled = false));
+        }
+      });
+    });
+  </script>
 
 </body>
 </html>

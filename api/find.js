@@ -8,10 +8,12 @@ import { SAMPLE_DOCS } from '../data/samples.js';
 // 너무 긴 글이 들어오면 비용이 커지니 길이를 제한해요.
 const MAX_SENTENCE = 1000;
 const MAX_DOC = 20000;
+const MAX_LIBRARY_DOCS = 30;
+const MAX_LIBRARY_CHARS = 130000;
 
 const SYSTEM = `당신은 기획자를 돕는 리서치 비서입니다.
 사용자는 지금 읽고 있는 문서에서 궁금한 문장 하나를 골랐습니다.
-아래 "참고 자료" 기획안들 중에서 그 문장과 실제로 관련 있는 문단을 찾아 주세요.
+시스템 안내 끝의 "참고 자료" 기획안들 중에서 그 문장과 실제로 관련 있는 문단을 찾아 주세요.
 
 규칙:
 - 관련성이 높은 순서로 최대 3곳만 고르세요. 정말 관련 있는 곳이 없으면 빈 목록을 돌려주세요.
@@ -65,7 +67,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { sentence, docTitle = '', docText = '' } = req.body || {};
+  const { sentence, docTitle = '', docText = '', library } = req.body || {};
   if (typeof sentence !== 'string' || !sentence.trim()) {
     res.status(400).json({ error: '드래그한 문장이 비어 있어요.' });
     return;
@@ -75,10 +77,25 @@ export default async function handler(req, res) {
     return;
   }
 
-  const docs = SAMPLE_DOCS;
-  const userText = `<참고 자료>\n${libraryText(docs)}\n</참고 자료>
-
-<지금 읽는 문서 제목>${docTitle}</지금 읽는 문서 제목>
+  // 드라이브에서 읽어 온 문서가 오면 그걸 쓰고, 없으면 예시 기획안을 써요.
+  let docs = SAMPLE_DOCS;
+  if (Array.isArray(library) && library.length) {
+    const clean = library
+      .filter((d) => d && typeof d.name === 'string' && Array.isArray(d.paragraphs))
+      .map((d) => ({
+        id: typeof d.id === 'string' ? d.id : '',
+        name: d.name,
+        link: typeof d.link === 'string' && d.link.startsWith('https://') ? d.link : '',
+        paragraphs: d.paragraphs.filter((p) => typeof p === 'string'),
+      }));
+    const chars = clean.reduce((n, d) => n + d.paragraphs.join('\n').length, 0);
+    if (clean.length > MAX_LIBRARY_DOCS || chars > MAX_LIBRARY_CHARS) {
+      res.status(400).json({ error: '연결한 문서가 너무 많거나 길어요. 더 작은 폴더를 골라 주세요.' });
+      return;
+    }
+    if (clean.length) docs = clean;
+  }
+  const userText = `<지금 읽는 문서 제목>${docTitle}</지금 읽는 문서 제목>
 <지금 읽는 문서>\n${docText}\n</지금 읽는 문서>
 
 <고른 문장>${sentence.trim()}</고른 문장>`;
@@ -92,7 +109,15 @@ export default async function handler(req, res) {
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       output_config: { effort: 'medium' },
-      system: SYSTEM,
+      // 참고 자료는 같은 폴더로 여러 번 찾을 때 다시 읽지 않도록 캐시해 두어 비용을 아껴요.
+      system: [
+        { type: 'text', text: SYSTEM },
+        {
+          type: 'text',
+          text: `<참고 자료>\n${libraryText(docs)}\n</참고 자료>`,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
       tools: [REPORT_TOOL],
       tool_choice: { type: 'auto' },
       messages: [{ role: 'user', content: userText }],
@@ -114,6 +139,7 @@ export default async function handler(req, res) {
         const doc = docs[r.file_index];
         return {
           file: doc.name,
+          link: doc.link || '',
           paragraphs: doc.paragraphs,
           index: r.paragraph_index,
           excerpt: doc.paragraphs[r.paragraph_index],

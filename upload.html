@@ -79,7 +79,7 @@
 
   <header>
     <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
-    <div class="meta">연결된 폴더: 2025 기획안 · <a href="folder.html">바꾸기</a></div>
+    <div class="meta">연결된 곳: <span id="source">없음</span> · <a href="folder.html">바꾸기</a></div>
   </header>
 
   <main class="frame">
@@ -113,7 +113,12 @@
     </div>
   </main>
 
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
   <script>
+    const lib = SnipGoogle.getLibrary();
+    if (lib && lib.docs) document.getElementById('source').textContent = lib.source + ' (문서 ' + lib.docs.length + '개)';
+
     // 탭을 누르면 해당 칸만 보이게 바꿔요.
     const tabs = document.querySelectorAll('.tabs button');
     tabs.forEach((tab) => {
