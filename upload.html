@@ -52,6 +52,9 @@
     }
     .drop b { font-size: 19px; font-weight: 500; }
     .drop small { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+    .drop.over { border-color: var(--orange); background: var(--orange-soft); }
+    .drop.ready { border-style: solid; border-color: var(--orange); }
+    .drop small.error { color: #b3261e; }
 
     /* 텍스트 붙여넣기 칸 */
     .paste {
@@ -95,9 +98,10 @@
 
       <div class="drop" id="drop">
         <div class="file-icon" aria-hidden="true"></div>
-        <b>파일을 여기로 끌어다 놓거나</b>
-        <button type="button" class="btn btn-ghost">내 컴퓨터에서 고르기</button>
-        <small>[지원 형식: 워드, PDF, 구글 문서 등]</small>
+        <b id="drop-title">파일을 여기로 끌어다 놓거나</b>
+        <button type="button" class="btn btn-ghost" id="pick">내 컴퓨터에서 고르기</button>
+        <input type="file" id="file-input" accept=".docx,.pdf,.txt,.md" hidden>
+        <small id="file-status">지원 형식: 워드(.docx), PDF, 텍스트(.txt)</small>
       </div>
 
       <div class="paste" id="paste" hidden>
@@ -142,7 +146,9 @@
       const pasteOn = !document.getElementById('paste').hidden;
       const value = text.value.trim();
       try {
-        if (pasteOn && value) {
+        if (!pasteOn && fileDoc) {
+          sessionStorage.setItem('snip-doc', JSON.stringify(fileDoc));
+        } else if (pasteOn && value) {
           const firstLine = value.split('\n')[0].trim();
           const title = firstLine.length > 30 ? firstLine.slice(0, 30) + '…' : firstLine;
           sessionStorage.setItem('snip-doc', JSON.stringify({ title, text: value }));
@@ -150,6 +156,91 @@
           sessionStorage.removeItem('snip-doc');
         }
       } catch (e) {}
+    });
+    // ---------- 내 컴퓨터에서 파일 올리기 ----------
+    // 파일은 서버로 보내지 않고, 이 브라우저 안에서 글자만 꺼내요.
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('file-input');
+    const fileStatus = document.getElementById('file-status');
+    const dropTitle = document.getElementById('drop-title');
+    let fileDoc = null;
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector('script[src="' + src + '"]')) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('파일 읽기 도구를 불러오지 못했어요.'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function readDocx(file) {
+      await loadScript('vendor/mammoth.browser.min.js');
+      const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+      return result.value;
+    }
+
+    async function readPdf(file) {
+      await loadScript('vendor/pdf.min.js');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        // 같은 줄의 글자는 붙이고, 줄이 바뀌면 줄바꿈을 넣어요.
+        let line = '';
+        const lines = [];
+        content.items.forEach((item) => {
+          line += item.str;
+          if (item.hasEOL) { lines.push(line); line = ''; }
+        });
+        if (line) lines.push(line);
+        pages.push(lines.join('\n'));
+      }
+      return pages.join('\n\n');
+    }
+
+    async function handleFile(file) {
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      fileDoc = null;
+      drop.classList.remove('ready');
+      fileStatus.className = '';
+      fileStatus.textContent = '"' + file.name + '" 읽는 중...';
+      try {
+        let text;
+        if (ext === 'docx') text = await readDocx(file);
+        else if (ext === 'pdf') text = await readPdf(file);
+        else if (ext === 'txt' || ext === 'md') text = await file.text();
+        else if (ext === 'doc' || ext === 'hwp') throw new Error('예전 워드(.doc)와 한글(.hwp)은 아직 못 읽어요. .docx나 PDF로 저장해서 올려 주세요.');
+        else throw new Error('이 파일 형식은 아직 못 읽어요. 워드(.docx), PDF, 텍스트(.txt)를 올려 주세요.');
+
+        text = (text || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
+        if (!text) throw new Error('파일에서 글자를 찾지 못했어요. 스캔한 이미지 PDF는 글자를 읽을 수 없어요.');
+        if (text.length > 20000) throw new Error('문서가 너무 길어요(' + text.length.toLocaleString() + '자). 2만 자 이하로 나눠서 올려 주세요.');
+
+        fileDoc = { title: file.name.replace(/\.[^.]+$/, ''), text, fromFile: true };
+        drop.classList.add('ready');
+        dropTitle.textContent = '✓ ' + file.name;
+        fileStatus.textContent = text.length.toLocaleString() + '자를 읽었어요. 아래 "문서 열기"를 눌러 주세요.';
+      } catch (e) {
+        dropTitle.textContent = '파일을 여기로 끌어다 놓거나';
+        fileStatus.className = 'error';
+        fileStatus.textContent = e.message || '파일을 읽지 못했어요.';
+      }
+    }
+
+    document.getElementById('pick').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      handleFile(e.dataTransfer.files[0]);
     });
   </script>
 

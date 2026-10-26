@@ -185,8 +185,8 @@
       const body = document.getElementById('doc-body');
       body.innerHTML = '';
       const firstLine = saved.text.split('\n')[0].trim();
-      const rest = saved.title.endsWith('…') ? saved.text : saved.text.slice(saved.text.indexOf(firstLine) + firstLine.length);
-      rest.split(/\n\s*\n/).forEach((para) => {
+      const rest = saved.fromFile || saved.title.endsWith('…') ? saved.text : saved.text.slice(saved.text.indexOf(firstLine) + firstLine.length);
+      rest.split(saved.fromFile ? /\n+/ : /\n\s*\n/).forEach((para) => {
         const p = document.createElement('p');
         p.textContent = para.trim();
         if (p.textContent) body.appendChild(p);
