@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>원본 보기 · snip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 맨 위 줄: 돌아가기 + 파일 이름 + 드라이브에서 열기 */
+    .bar-top {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .bar-top .back { font-size: 15px; font-weight: 500; color: var(--ink); white-space: nowrap; }
+    .bar-top .name { flex: 1; font-family: var(--mono); font-size: 15px; }
+    .bar-top .btn { padding: 12px 18px; font-size: 13px; white-space: nowrap; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      min-height: calc(100vh - 160px);
+    }
+
+    .doc {
+      padding: 40px 64px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .doc .where { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+    /* 형광펜으로 칠해진 관련 부분 */
+    .hit {
+      background: var(--orange-soft);
+      border-left: 4px solid var(--orange);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .hit small { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--orange); }
+    .hit p { font-size: 17px; line-height: 1.75; }
+
+    /* 오른쪽: 이 파일 안의 관련 부분 목록 */
+    .side {
+      padding: 28px;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .side button {
+      text-align: left;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-family: var(--kr);
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .side button.on { border: 2px solid var(--orange); }
+
+    @media (max-width: 900px) {
+      .bar-top { flex-wrap: wrap; padding: 14px 20px; }
+      .bar-top .name { flex-basis: 100%; order: 3; }
+      .split { grid-template-columns: 1fr; }
+      .doc { padding: 32px 20px; border-right: none; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
+    <div class="meta">원본 보기</div>
+  </header>
+
+  <main class="frame">
+    <div class="bar-top">
+      <a class="back" href="reader.html">← 읽던 문서로</a>
+      <span class="name">2024 온보딩 개선안_v3.docx</span>
+      <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 열기</a>
+    </div>
+
+    <div class="split">
+      <article class="doc">
+        <span class="where">… 4쪽 · 자동으로 관련 부분까지 내려왔어요</span>
+        <div class="ph" style="width: 88%"></div>
+        <div class="ph" style="width: 80%"></div>
+        <div class="hit">
+          <small>관련 부분</small>
+          <p>[관련 문단 전체: 형광펜으로 칠해진 상태]</p>
+        </div>
+        <div class="ph" style="width: 84%"></div>
+        <div class="ph" style="width: 76%"></div>
+        <div class="ph" style="width: 82%"></div>
+        <div class="ph" style="width: 58%"></div>
+      </article>
+
+      <aside class="side">
+        <div class="label">이 파일의 관련 부분</div>
+        <button type="button" class="on">1. 4쪽 · 온보딩 단계 축소</button>
+        <button type="button">2. 7쪽 · 이탈률 데이터</button>
+      </aside>
+    </div>
+  </main>
+
+</body>
+</html>

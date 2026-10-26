@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문서 읽기 · snip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 왼쪽 문서 + 오른쪽 결과 칸 */
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 440px;
+      min-height: calc(100vh - 81px);
+    }
+
+    .doc {
+      padding: 48px 56px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .doc h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    .doc p { font-size: 17px; line-height: 1.85; color: var(--muted); word-break: keep-all; }
+    .doc mark {
+      background: var(--orange-soft);
+      color: var(--ink);
+      border-bottom: 2px solid var(--orange);
+      padding: 2px 0;
+    }
+    .find {
+      align-self: flex-start;
+      font-size: 14px;
+      padding: 12px 20px;
+      background: var(--ink);
+      color: #fff !important;
+    }
+
+    /* 오른쪽 결과 칸 */
+    .results {
+      background: var(--panel);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card .file { font-family: var(--mono); font-size: 13px; color: var(--orange); }
+    .card blockquote {
+      font-size: 15px;
+      line-height: 1.7;
+      background: var(--bg);
+      padding: 12px 14px;
+      word-break: keep-all;
+    }
+    .card .why { font-size: 14px; color: var(--muted); }
+    .card .tip {
+      font-size: 14px;
+      line-height: 1.65;
+      background: var(--ink);
+      color: #eee;
+      padding: 12px 14px;
+    }
+    .card .tip b { color: var(--orange); font-weight: 500; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; }
+    .card a.open { font-size: 15px; font-weight: 500; color: var(--ink); }
+
+    @media (max-width: 900px) {
+      .split { grid-template-columns: 1fr; }
+      .doc { padding: 32px 20px; border-right: none; border-bottom: 1px solid var(--line); }
+      .results { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
+    <div class="meta">읽는 중: 3분기 기획안 피드백.docx · <a href="upload.html">다른 문서</a></div>
+  </header>
+
+  <main class="frame">
+    <div class="split">
+
+      <article class="doc">
+        <div class="label"><span class="dot"></span>STEP 3 / 3 · 궁금한 문장을 드래그하세요</div>
+        <h1>3분기 기획안 피드백</h1>
+        <p>전체적인 방향은 좋습니다. 다만 신규 사용자 관점에서 몇 가지 보완이 필요해 보입니다.</p>
+        <p><mark>신규 회원 온보딩 단계를 줄이는 방안을 검토해 주세요.</mark></p>
+        <a class="btn find" href="#results">▸ 관련 내용 찾기</a>
+        <p>또한 경쟁 서비스 대비 차별점이 첫 화면에서 잘 드러나지 않습니다.</p>
+        <div class="ph" style="width: 90%"></div>
+        <div class="ph" style="width: 78%"></div>
+        <div class="ph" style="width: 84%"></div>
+        <div class="ph" style="width: 60%"></div>
+      </article>
+
+      <aside class="results" id="results">
+        <div class="label">드래그한 문장과 관련된 부분 3곳</div>
+
+        <div class="card">
+          <div class="file">2024 온보딩 개선안_v3.docx</div>
+          <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
+          <div class="why">왜 관련 있나요: [이유 한 줄]</div>
+          <div class="tip"><b>이렇게 참고해 보세요</b><br>[활용 제안 한두 줄]</div>
+          <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+        </div>
+
+        <div class="card">
+          <div class="file">가입 플로우 회의록_0412.pdf</div>
+          <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
+          <div class="why">왜 관련 있나요: [이유 한 줄]</div>
+          <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+        </div>
+
+        <div class="card">
+          <div class="file">23년 회고 정리.pdf</div>
+          <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
+          <div class="why">왜 관련 있나요: [이유 한 줄]</div>
+          <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+</body>
+</html>

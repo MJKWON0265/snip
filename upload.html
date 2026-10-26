@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문서 넣기 · snip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 파일 올리기 / 텍스트 붙여넣기 탭 */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+    }
+    .tabs button {
+      height: 52px;
+      padding: 0 24px;
+      border: none;
+      background: none;
+      font-family: var(--kr);
+      font-size: 17px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tabs button.on {
+      color: var(--ink);
+      font-weight: 700;
+      border-bottom: 3px solid var(--orange);
+    }
+
+    /* 파일을 끌어다 놓는 칸 */
+    .drop {
+      min-height: 280px;
+      border: 1.5px dashed #a9a9a9;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    .drop .file-icon {
+      width: 46px;
+      height: 56px;
+      border: 2px solid var(--ink);
+      clip-path: polygon(0 0, 70% 0, 100% 25%, 100% 100%, 0 100%);
+      position: relative;
+    }
+    .drop b { font-size: 19px; font-weight: 500; }
+    .drop small { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
+    <div class="meta">연결된 폴더: 2025 기획안 · <a href="folder.html">바꾸기</a></div>
+  </header>
+
+  <main class="frame">
+    <div class="page">
+      <div class="label"><span class="dot"></span>STEP 2 / 3 · 읽을 문서 넣기</div>
+      <h1 class="page-title">지금 읽을 문서를 넣어 주세요</h1>
+      <p class="page-sub">피드백 문서, 결재 문서처럼 지금 확인해야 하는 문서 하나면 돼요.</p>
+
+      <div class="tabs">
+        <button type="button" class="on">파일 올리기</button>
+        <button type="button">텍스트 붙여넣기</button>
+      </div>
+
+      <div class="drop">
+        <div class="file-icon" aria-hidden="true"></div>
+        <b>파일을 여기로 끌어다 놓거나</b>
+        <button type="button" class="btn btn-ghost">내 컴퓨터에서 고르기</button>
+        <small>[지원 형식: 워드, PDF, 구글 문서 등]</small>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-ghost" href="folder.html">← 이전</a>
+        <a class="btn" href="reader.html">문서 열기 →</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>

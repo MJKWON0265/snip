@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>폴더 연결 · snip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 폴더 하나 / 드라이브 전체 고르는 두 칸 */
+    .scope {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .scope label {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 22px;
+      cursor: pointer;
+    }
+    .scope input { accent-color: var(--orange); width: 20px; height: 20px; margin-top: 3px; }
+    .scope b { display: block; font-size: 18px; margin-bottom: 4px; }
+    .scope span { font-size: 15px; color: var(--muted); }
+    .scope label:has(input:checked) { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+
+    /* 폴더 목록 */
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .search input {
+      flex: 1;
+      height: 56px;
+      border: none;
+      background: transparent;
+      font-family: var(--kr);
+      font-size: 16px;
+    }
+    .search input:focus { outline: none; }
+    .path {
+      padding: 12px 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+    }
+    .folder {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      font-size: 17px;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+    }
+    .folder:last-child { border-bottom: none; }
+    .folder .icon {
+      width: 22px;
+      height: 17px;
+      border: 2px solid var(--muted);
+      border-radius: 3px;
+    }
+    .folder.selected { background: var(--orange-soft); font-weight: 700; }
+    .folder.selected .icon { border-color: var(--orange); }
+    .folder .pick {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--orange);
+    }
+
+    /* 문서 읽는 중 표시 */
+    .progress {
+      padding: 22px;
+      border: 1px dashed var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .progress b { font-size: 16px; font-weight: 500; }
+    .bar { height: 10px; background: #fff; border: 1px solid var(--line); }
+    .bar div { width: 38%; height: 100%; background: var(--orange); }
+    .progress span { font-size: 14px; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .scope { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
+    <div class="meta">달수님 · <a href="index.html">로그아웃</a></div>
+  </header>
+
+  <main class="frame">
+    <div class="page">
+      <div class="label"><span class="dot"></span>STEP 1 / 3 · 폴더 연결</div>
+      <h1 class="page-title">참고할 기획안이 있는 곳을 골라 주세요</h1>
+
+      <div class="scope">
+        <label class="box">
+          <input type="radio" name="scope" checked>
+          <div><b>폴더 하나 고르기 (추천)</b><span>빠르고 정확해요</span></div>
+        </label>
+        <label class="box">
+          <input type="radio" name="scope">
+          <div><b>드라이브 전체</b><span>최근 파일 [N]개까지만 읽어요</span></div>
+        </label>
+      </div>
+
+      <div class="box">
+        <label class="search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <span class="sr-only">폴더 이름 검색</span>
+          <input type="text" placeholder="폴더 이름으로 찾기 (예: 2025 기획안)">
+        </label>
+        <div class="path">내 드라이브 &gt; 업무</div>
+        <div class="folder"><span class="icon"></span>2024 기획안</div>
+        <div class="folder selected"><span class="icon"></span>2025 기획안<span class="pick">선택됨</span></div>
+        <div class="folder"><span class="icon"></span>피드백 모음</div>
+      </div>
+
+      <div class="progress">
+        <b>문서 읽는 중... 32개 중 12개 완료</b>
+        <div class="bar"><div></div></div>
+        <span>처음 한 번만 기다리면 돼요. 그동안 다음 화면으로 넘어가도 괜찮아요.</span>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="upload.html">다음: 읽을 문서 넣기 →</a>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>

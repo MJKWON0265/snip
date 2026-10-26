@@ -1,0 +1,161 @@
+/* 색과 글꼴을 한곳에 모아 둔 곳이에요. 여기만 바꾸면 전체 분위기가 바뀌어요. */
+:root {
+  --bg: #e9e9e9;
+  --panel: #f4f4f4;
+  --line: #c9c9c9;
+  --ink: #161616;
+  --muted: #555;
+  --orange: #ff6b1a;
+  --orange-soft: #ffe3d2;
+  --mono: "JetBrains Mono", "IBM Plex Sans KR", monospace;
+  --kr: "IBM Plex Sans KR", sans-serif;
+  --display: "Tomorrow", "IBM Plex Sans KR", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--kr);
+  min-height: 100vh;
+}
+
+/* 오른쪽 아래 모서리를 비스듬히 자른 주황 버튼 */
+.btn {
+  display: inline-block;
+  background: var(--orange);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  padding: 16px 28px;
+  border: none;
+  cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  transition: transform 0.15s, filter 0.15s;
+}
+.btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: var(--orange);
+}
+
+/* ---------- 맨 위 줄 ---------- */
+header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--line);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 22px;
+}
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--orange);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--orange);
+}
+
+a.btn, a.logo { text-decoration: none; color: var(--ink); }
+
+/* 테두리만 있는 보조 버튼 */
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  clip-path: none;
+}
+
+/* 가운데 내용 칸 양옆의 세로 선 */
+.frame {
+  margin: 0 40px;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+}
+
+/* ---------- 로그인 후 화면들이 함께 쓰는 부분 ---------- */
+.meta {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--muted);
+}
+.meta a { color: var(--ink); }
+
+/* 화면 맨 위 "STEP 1 / 3" 같은 작은 표시 */
+.label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 56px 32px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.page-title {
+  font-weight: 700;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.35;
+  word-break: keep-all;
+}
+.page-sub {
+  font-size: 17px;
+  color: var(--muted);
+  margin-top: -12px;
+  word-break: keep-all;
+}
+
+.box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* 아직 내용이 없는 자리를 표시하는 회색 줄 */
+.ph {
+  height: 12px;
+  background: #dcdcdc;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (max-width: 900px) {
+  header { padding: 16px; }
+  .frame { margin: 0 16px; }
+  .page { padding: 40px 20px 56px; }
+  .actions .btn { width: 100%; text-align: center; }
+}
