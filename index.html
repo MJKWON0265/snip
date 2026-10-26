@@ -116,10 +116,61 @@
       letter-spacing: 0.08em;
     }
 
-    /* ---------- 가운데 세 칸 ---------- */
+    /* ---------- 설명 + 시작 버튼 (첫 화면에서 가장 눈에 띄어야 하는 곳) ---------- */
+    .start {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 40px;
+      padding: 48px 32px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+    }
+    .start .desc {
+      font-family: var(--kr);
+      font-weight: 700;
+      font-size: clamp(24px, 2.6vw, 36px);
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+    .start .desc em {
+      font-style: normal;
+      color: var(--orange);
+    }
+    .btn-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 20px;
+      font-weight: 500;
+      padding: 26px 44px;
+      white-space: nowrap;
+      box-shadow: 0 10px 0 -2px rgba(255, 107, 26, 0.25);
+    }
+    .btn-lg .g {
+      width: 32px;
+      height: 32px;
+      background: #fff;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--kr);
+      font-weight: 700;
+      font-size: 18px;
+      color: #4285f4;
+    }
+    .start .note {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    /* ---------- 서비스 미리보기 두 칸 ---------- */
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1.4fr 1fr;
+      grid-template-columns: 1.4fr 1fr;
       border-bottom: 1px solid var(--line);
     }
     .cell {
@@ -235,7 +286,10 @@
       header { padding: 16px; }
       .frame { margin: 0 16px; }
       .hero-title { padding: 40px 20px 20px; }
-      .grid, .steps { grid-template-columns: 1fr; }
+      .grid, .steps, .start { grid-template-columns: 1fr; }
+      .start { padding: 32px 20px; gap: 24px; }
+      .start .desc br { display: none; }
+      .btn-lg { width: 100%; justify-content: center; padding: 22px 20px; font-size: 18px; }
       .cell, .step { border-right: none; border-bottom: 1px solid var(--line); }
       .cell { padding: 32px 20px; }
       .desc { font-size: 16px; }
@@ -265,12 +319,15 @@
       </div>
     </section>
 
-    <section class="grid">
-      <div class="cell">
-        <p class="desc">문장을 드래그하고,<br>관련 파일을 발견하고,<br>분석을 바탕으로<br>다음 아이디어를 구체화하세요.</p>
-        <button class="btn">Google로 시작하기</button>
+    <section class="start">
+      <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>드라이브 속 놓친 기획안까지 찾아<br>참고할 부분을 보여드려요.</p>
+      <div>
+        <button class="btn btn-lg"><span class="g">G</span>Google로 시작하기</button>
+        <p class="note">구글 계정으로 바로 시작해요</p>
       </div>
+    </section>
 
+    <section class="grid">
       <div class="cell">
         <div class="doc">
           <div class="doc-head"><span></span><span></span><span></span></div>
