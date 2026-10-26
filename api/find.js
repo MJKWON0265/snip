@@ -84,7 +84,7 @@ export default async function handler(req, res) {
 <고른 문장>${sentence.trim()}</고른 문장>`;
 
   try {
-    const client = new Anthropic();
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
     const response = await client.beta.messages.create({
       model: 'claude-opus-5-5',
       max_tokens: 16000,
