@@ -115,6 +115,23 @@
     .item.selected .check { background: var(--orange); border-color: var(--orange); color: #fff; }
     .item .kind { margin-left: auto; font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--muted); white-space: nowrap; }
 
+    /* 모두 선택 / 모두 해제 */
+    .bulk {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .bulk button {
+      border: 1.5px solid var(--ink);
+      background: #fff;
+      font-family: var(--kr);
+      font-size: 14px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    .bulk button:hover { background: var(--orange-soft); }
+
     /* 고른 파일 모음 */
     .basket {
       padding: 14px 20px;
@@ -276,6 +293,10 @@
           <input type="text" id="file-search" placeholder="파일 이름으로 찾기 (예: 온보딩)">
         </label>
         <div class="path" id="file-status">파일 이름을 입력하면 찾아드려요. 여러 번 검색해서 계속 담을 수 있어요.</div>
+        <div class="bulk" id="file-bulk" hidden>
+          <button type="button" data-bulk="all">모두 선택</button>
+          <button type="button" data-bulk="none">모두 해제</button>
+        </div>
         <div id="file-list" class="item-list"></div>
         <div class="basket" id="file-basket" hidden></div>
       </div>
@@ -289,6 +310,10 @@
           <button type="submit" class="btn">관련 문서 찾기</button>
         </form>
         <div class="path" id="keyword-status">문서 본문까지 살펴서 관련 있을 것 같은 문서를 찾아요. 찾은 뒤 빼고 싶은 건 체크를 풀면 돼요.</div>
+        <div class="bulk" id="keyword-bulk" hidden>
+          <button type="button" data-bulk="all">모두 선택</button>
+          <button type="button" data-bulk="none">모두 해제</button>
+        </div>
         <div id="keyword-list" class="item-list"></div>
       </div>
 
@@ -481,9 +506,32 @@
       updateButton();
     }
 
+    // 지금 보이는 검색 결과 줄들 (모두 선택/해제에 써요)
+    let fileRows = [];
+    let keywordRows = [];
+
+    // "모두 선택"은 지금 보이는 결과를 모두 담고, "모두 해제"는 보이는 결과를 모두 빼요.
+    function bulk(rows, map, on) {
+      rows.forEach(({ f, btn }) => {
+        if (on) map.set(f.id, f);
+        else map.delete(f.id);
+        setSelected(btn, on);
+      });
+    }
+    document.querySelectorAll('#file-bulk [data-bulk]').forEach((b) => b.addEventListener('click', () => {
+      bulk(fileRows, pickedFiles, b.dataset.bulk === 'all');
+      renderFileBasket();
+    }));
+    document.querySelectorAll('#keyword-bulk [data-bulk]').forEach((b) => b.addEventListener('click', () => {
+      bulk(keywordRows, keywordFiles, b.dataset.bulk === 'all');
+      updateButton();
+    }));
+
     async function searchFileNames() {
       const name = fileSearch.value.trim();
       fileList.innerHTML = '';
+      fileRows = [];
+      document.getElementById('file-bulk').hidden = true;
       if (!name) {
         fileStatus.textContent = '파일 이름을 입력하면 찾아드려요. 여러 번 검색해서 계속 담을 수 있어요.';
         return;
@@ -495,13 +543,16 @@
           ? '"' + name + '"이(가) 들어간 문서 ' + files.length + '개 · 누르면 담기고, 다시 누르면 빠져요'
           : '찾지 못했어요. 구글 문서·구글 프레젠테이션만 찾을 수 있어요.';
         files.forEach((f) => {
-          fileList.appendChild(makeItem(f.name, pickedFiles.has(f.id), (btn) => {
+          const btn = makeItem(f.name, pickedFiles.has(f.id), () => {
             if (pickedFiles.has(f.id)) pickedFiles.delete(f.id);
             else pickedFiles.set(f.id, f);
             setSelected(btn, pickedFiles.has(f.id));
             renderFileBasket();
-          }, fileKind(f)));
+          }, fileKind(f));
+          fileRows.push({ f, btn });
+          fileList.appendChild(btn);
         });
+        document.getElementById('file-bulk').hidden = !files.length;
       } catch (e) {
         fileStatus.textContent = e.message;
       }
@@ -516,6 +567,8 @@
       const text = document.getElementById('keyword').value.trim();
       if (!text) return;
       keywordList.innerHTML = '';
+      keywordRows = [];
+      document.getElementById('keyword-bulk').hidden = true;
       keywordFiles.clear();
       updateButton();
       keywordStatus.textContent = '드라이브에서 관련 문서를 찾는 중이에요...';
@@ -528,13 +581,16 @@
         keywordStatus.textContent = '관련 있을 것 같은 문서 ' + files.length + '개를 찾아 모두 골라 뒀어요. 빼고 싶은 건 눌러서 체크를 풀어 주세요.';
         files.forEach((f) => {
           keywordFiles.set(f.id, f);
-          keywordList.appendChild(makeItem(f.name, true, (btn) => {
+          const btn = makeItem(f.name, true, () => {
             if (keywordFiles.has(f.id)) keywordFiles.delete(f.id);
             else keywordFiles.set(f.id, f);
             setSelected(btn, keywordFiles.has(f.id));
             updateButton();
-          }, fileKind(f)));
+          }, fileKind(f));
+          keywordRows.push({ f, btn });
+          keywordList.appendChild(btn);
         });
+        document.getElementById('keyword-bulk').hidden = false;
       } catch (err) {
         keywordStatus.textContent = err.message;
       }
@@ -611,6 +667,22 @@
       fileTimer = setTimeout(searchFileNames, 400);
     });
 
+    // 못 읽은 문서가 있으면 이유를 사람 말로 바꿔 알려줘요.
+    function explainProblems(problems) {
+      if (!problems) return '';
+      const words = {
+        'no-download': '주인이 다운로드를 막아 둔 문서',
+        'too-big': '너무 큰 문서',
+        'over-limit': '한 번에 읽을 수 있는 양(약 12만 자)을 넘은 문서',
+        'empty': '글자가 없는 문서',
+        'api-off-slides': '프레젠테이션 읽기 기능(Google Slides API)이 꺼져 있어 못 읽은 문서',
+        'api-off-docs': '문서 읽기 기능(Google Docs API)이 꺼져 있어 못 읽은 문서',
+      };
+      const parts = Object.entries(problems).map(([k, n]) =>
+        (words[k] || '읽다가 오류가 난 문서 (' + k.replace('error-', '') + ')') + ' ' + n + '개');
+      return parts.length ? '못 읽은 문서: ' + parts.join(', ') + '.' : '';
+    }
+
     // ---------- 읽어 오기 ----------
     connectBtn.addEventListener('click', async () => {
       const mode = scope();
@@ -664,13 +736,14 @@
               : '읽을 문서를 찾는 중...';
           });
         }
+        const why = explainProblems(lib.problems);
         if (!lib.docs.length) {
-          text.textContent = mode === 'folder'
+          text.textContent = (mode === 'folder' && !lib.skipped
             ? '여기에는 읽을 수 있는 문서가 없어요. 구글 문서나 구글 프레젠테이션이 있는 폴더를 골라 주세요.'
-            : '읽을 수 있는 문서가 없었어요. 다른 문서를 골라 주세요.';
+            : '읽을 수 있는 문서가 없었어요.') + (why ? ' ' + why : '');
           bar.style.width = '0%';
         } else {
-          text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (lib.skipped ? ' (' + lib.skipped + '개는 너무 크거나 읽지 못해 건너뛰었어요)' : '');
+          text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (why ? ' ' + why : '');
           builtKey = selectionKey();
         }
       } catch (e) {
