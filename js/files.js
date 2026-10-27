@@ -82,8 +82,12 @@
   // (localStorage는 글자만 담을 수 있어서 파일 자체는 IndexedDB를 써요. 서버로는 보내지 않아요.)
   function openDb() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('snip', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('files');
+      const req = indexedDB.open('snip', 2);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('files')) db.createObjectStore('files');      // 참고할 문서 원본들
+        if (!db.objectStoreNames.contains('reading')) db.createObjectStore('reading');  // 지금 읽을 문서 원본 하나
+      };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
@@ -114,5 +118,29 @@
     return file;
   }
 
-  window.SnipFiles = { ACCEPT, readText, saveOriginals, getOriginal };
+  // 지금 읽을 문서 원본 하나를 보관/꺼내기 (읽기 화면에서 원래 모양 그대로 보여주려고)
+  async function saveReading(file) {
+    const db = await openDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('reading', 'readwrite');
+      if (file) tx.objectStore('reading').put(file, 'current');
+      else tx.objectStore('reading').delete('current');
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }
+
+  async function getReading() {
+    const db = await openDb();
+    const file = await new Promise((resolve, reject) => {
+      const req = db.transaction('reading').objectStore('reading').get('current');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return file;
+  }
+
+  window.SnipFiles = { ACCEPT, readText, saveOriginals, getOriginal, saveReading, getReading };
 })();
