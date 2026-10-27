@@ -113,13 +113,13 @@
 
   async function drive(path, params) {
     const s = getSession();
-    if (!s) throw new Error('로그인이 만료되었어요. 첫 화면에서 다시 로그인해 주세요.');
+    if (!s) throw new Error('로그인이 만료되었어요. 페이지를 새로고침한 뒤 다시 로그인해 주세요.');
     const url = new URL('https://www.googleapis.com/drive/v3/' + path);
     Object.entries(params || {}).forEach(([k, v]) => url.searchParams.set(k, v));
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + s.token } });
     if (res.status === 401) {
       write(sessionStorage, SESSION_KEY, null);
-      throw new Error('로그인이 만료되었어요. 첫 화면에서 다시 로그인해 주세요.');
+      throw new Error('로그인이 만료되었어요. 페이지를 새로고침한 뒤 다시 로그인해 주세요.');
     }
     if (!res.ok) throw new Error('드라이브에서 정보를 가져오지 못했어요. (' + res.status + ')');
     return res;

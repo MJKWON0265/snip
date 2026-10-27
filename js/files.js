@@ -57,5 +57,42 @@
     return text;
   }
 
-  window.SnipFiles = { ACCEPT, readText };
+  // ---------- 올린 원본 파일 보관 ----------
+  // 원본 보기 화면에서 "원본 파일 열기"를 할 수 있게, 올린 파일을 이 브라우저의 IndexedDB에 넣어 둬요.
+  // (localStorage는 글자만 담을 수 있어서 파일 자체는 IndexedDB를 써요. 서버로는 보내지 않아요.)
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('snip', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('files');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // 새로 올린 파일들로 통째로 바꿔요. entries: [{ id, file }]
+  async function saveOriginals(entries) {
+    const db = await openDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('files', 'readwrite');
+      const store = tx.objectStore('files');
+      store.clear();
+      entries.forEach((e) => store.put(e.file, e.id));
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }
+
+  async function getOriginal(id) {
+    const db = await openDb();
+    const file = await new Promise((resolve, reject) => {
+      const req = db.transaction('files').objectStore('files').get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return file;
+  }
+
+  window.SnipFiles = { ACCEPT, readText, saveOriginals, getOriginal };
 })();

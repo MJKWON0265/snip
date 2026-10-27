@@ -138,6 +138,7 @@ export default async function handler(req, res) {
       .map((r) => {
         const doc = docs[r.file_index];
         return {
+          id: doc.id || '',
           file: doc.name,
           link: doc.link || '',
           paragraphs: doc.paragraphs,
