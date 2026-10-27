@@ -119,6 +119,7 @@
 
   <script src="js/config.js"></script>
   <script src="js/google.js"></script>
+  <script src="js/files.js"></script>
   <script>
     const lib = SnipGoogle.getLibrary();
     if (lib && lib.docs) document.getElementById('source').textContent = lib.source + ' (문서 ' + lib.docs.length + '개)';
@@ -165,61 +166,14 @@
     const dropTitle = document.getElementById('drop-title');
     let fileDoc = null;
 
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        if (document.querySelector('script[src="' + src + '"]')) return resolve();
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('파일 읽기 도구를 불러오지 못했어요.'));
-        document.head.appendChild(s);
-      });
-    }
-
-    async function readDocx(file) {
-      await loadScript('vendor/mammoth.browser.min.js');
-      const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-      return result.value;
-    }
-
-    async function readPdf(file) {
-      await loadScript('vendor/pdf.min.js');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
-      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-      const pages = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        // 같은 줄의 글자는 붙이고, 줄이 바뀌면 줄바꿈을 넣어요.
-        let line = '';
-        const lines = [];
-        content.items.forEach((item) => {
-          line += item.str;
-          if (item.hasEOL) { lines.push(line); line = ''; }
-        });
-        if (line) lines.push(line);
-        pages.push(lines.join('\n'));
-      }
-      return pages.join('\n\n');
-    }
-
     async function handleFile(file) {
       if (!file) return;
-      const ext = file.name.split('.').pop().toLowerCase();
       fileDoc = null;
       drop.classList.remove('ready');
       fileStatus.className = '';
       fileStatus.textContent = '"' + file.name + '" 읽는 중...';
       try {
-        let text;
-        if (ext === 'docx') text = await readDocx(file);
-        else if (ext === 'pdf') text = await readPdf(file);
-        else if (ext === 'txt' || ext === 'md') text = await file.text();
-        else if (ext === 'doc' || ext === 'hwp') throw new Error('예전 워드(.doc)와 한글(.hwp)은 아직 못 읽어요. .docx나 PDF로 저장해서 올려 주세요.');
-        else throw new Error('이 파일 형식은 아직 못 읽어요. 워드(.docx), PDF, 텍스트(.txt)를 올려 주세요.');
-
-        text = (text || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
-        if (!text) throw new Error('파일에서 글자를 찾지 못했어요. 스캔한 이미지 PDF는 글자를 읽을 수 없어요.');
+        const text = await SnipFiles.readText(file);
         if (text.length > 20000) throw new Error('문서가 너무 길어요(' + text.length.toLocaleString() + '자). 2만 자 이하로 나눠서 올려 주세요.');
 
         fileDoc = { title: file.name.replace(/\.[^.]+$/, ''), text, fromFile: true };
