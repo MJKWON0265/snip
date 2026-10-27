@@ -52,7 +52,7 @@
     /* 오른쪽: 이 파일 안의 관련 부분 목록 */
     .side {
       padding: 28px;
-      background: var(--panel);
+      background: #f3f3f0;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -71,11 +71,26 @@
     .hit p { color: var(--ink); }
     [hidden] { display: none !important; }
 
+    /* 스크롤해도 오른쪽 아래에 늘 떠 있는 "구글 드라이브에서 열기" 버튼 */
+    .float-open {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 22px;
+      font-size: 15px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+
     @media (max-width: 900px) {
       .bar-top { flex-wrap: wrap; padding: 14px 20px; }
       .bar-top .name { flex-basis: 100%; order: 3; }
       .split { grid-template-columns: 1fr; }
       .doc { padding: 32px 20px; border-right: none; border-bottom: 1px solid var(--line); }
+      .float-open { right: 16px; bottom: 16px; }
     }
   </style>
 </head>
@@ -116,6 +131,8 @@
     </div>
   </main>
 
+  <a class="btn float-open" id="float-open" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 원본 열기 ↗</a>
+
   <script>
     // 결과 카드에서 고른 문단이 있으면, 그 파일 전체를 보여주고 해당 문단을 형광펜으로 칠해요.
     let hit = null;
@@ -132,6 +149,10 @@
       document.getElementById('file-name').textContent = hit.file;
       if (hit.link) document.getElementById('drive-link').href = hit.link;
       else document.getElementById('drive-link').hidden = true;
+      // 떠 있는 버튼도 같은 원본으로 이어져요. 내 컴퓨터에서 올린 파일은 드라이브 링크가 없어서 숨겨요.
+      const floatOpen = document.getElementById('float-open');
+      if (hit.link) floatOpen.href = hit.link;
+      else floatOpen.hidden = true;
       const doc = document.getElementById('doc');
       doc.innerHTML = '';
       const where = document.createElement('span');

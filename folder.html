@@ -9,25 +9,25 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* 폴더 하나 / 드라이브 전체 고르는 두 칸 */
+    /* 기획안을 가져오는 방법 네 가지 */
     .scope {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
     }
     .scope label {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       align-items: flex-start;
-      padding: 22px;
+      padding: 18px;
       cursor: pointer;
     }
-    .scope input { accent-color: var(--orange); width: 20px; height: 20px; margin-top: 3px; }
-    .scope b { display: block; font-size: 18px; margin-bottom: 4px; }
-    .scope span { font-size: 15px; color: var(--muted); }
+    .scope input { accent-color: var(--orange); width: 18px; height: 18px; margin-top: 3px; flex: none; }
+    .scope b { display: block; font-size: 16px; margin-bottom: 4px; word-break: keep-all; }
+    .scope span { font-size: 14px; color: var(--muted); word-break: keep-all; }
     .scope label:has(input:checked) { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
 
-    /* 폴더 목록 */
+    /* 검색 칸 */
     .search {
       display: flex;
       align-items: center;
@@ -44,6 +44,7 @@
       font-size: 16px;
     }
     .search input:focus { outline: none; }
+    .search .btn { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
     .path {
       padding: 12px 20px;
       font-family: var(--mono);
@@ -51,8 +52,10 @@
       color: var(--muted);
       border-bottom: 1px solid var(--line);
     }
-    .folder-list { max-height: 360px; overflow-y: auto; }
-    .folder {
+
+    /* 폴더·파일 목록: 왼쪽 네모에 체크 표시 */
+    .item-list { max-height: 360px; overflow-y: auto; }
+    .item {
       width: 100%;
       background: none;
       border: none;
@@ -67,24 +70,13 @@
       border-bottom: 1px solid var(--line);
       cursor: pointer;
     }
-    .folder:last-child { border-bottom: none; }
-    .folder:hover { background: #fff; }
-    [hidden] { display: none !important; }
-    button.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
-    .folder .icon {
-      width: 22px;
-      height: 17px;
-      border: 2px solid var(--muted);
-      border-radius: 3px;
-    }
-    .folder.selected { background: var(--orange-soft); font-weight: 700; }
-    .folder.selected .icon { border-color: var(--orange); }
-    /* 오른쪽 체크 칸: 고르면 주황색으로 채워지고 ✓ 표시 */
-    .folder .check {
-      margin-left: auto;
+    .item:last-child { border-bottom: none; }
+    .item:hover { background: var(--bg); }
+    .item .check {
+      flex: none;
       width: 24px;
       height: 24px;
-      border: 2px solid var(--line);
+      border: 2px solid #9a9a96;
       border-radius: 4px;
       display: grid;
       place-items: center;
@@ -94,7 +86,50 @@
       color: transparent;
       background: #fff;
     }
-    .folder.selected .check { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .item.selected { background: var(--orange-soft); font-weight: 700; }
+    .item.selected .check { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .item .kind { margin-left: auto; font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--muted); white-space: nowrap; }
+
+    /* 고른 파일 모음 */
+    .basket {
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .basket b { font-family: var(--mono); font-size: 13px; font-weight: 500; margin-right: 4px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--orange-soft);
+      border: 1px solid var(--orange);
+      font-family: var(--kr);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .chip.error { background: #fdecea; border-color: #b3261e; cursor: default; }
+
+    /* 내 컴퓨터 파일 끌어다 놓는 칸 */
+    .drop {
+      min-height: 200px;
+      border: 1.5px dashed #a9a9a9;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .drop b { font-size: 18px; font-weight: 500; }
+    .drop small { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+    .drop.over { border-color: var(--orange); background: var(--orange-soft); }
 
     /* 문서 읽는 중 표시 */
     .progress {
@@ -109,7 +144,13 @@
     .bar div { width: 38%; height: 100%; background: var(--orange); }
     .progress span { font-size: 14px; color: var(--muted); }
 
+    [hidden] { display: none !important; }
+    button.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
     @media (max-width: 900px) {
+      .scope { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 520px) {
       .scope { grid-template-columns: 1fr; }
     }
   </style>
@@ -123,28 +164,72 @@
 
   <main class="frame">
     <div class="page">
-      <div class="label"><span class="dot"></span>STEP 1 / 3 · 폴더 연결</div>
-      <h1 class="page-title">참고할 기획안이 있는 곳을 골라 주세요</h1>
+      <div class="label"><span class="dot"></span>STEP 1 / 3 · 참고할 기획안 모으기</div>
+      <h1 class="page-title">참고할 기획안을 어디서 가져올까요?</h1>
 
       <div class="scope">
         <label class="box">
-          <input type="radio" name="scope" value="folder" checked>
-          <div><b>폴더 하나 고르기 (추천)</b><span>빠르고 정확해요</span></div>
+          <input type="radio" name="scope" value="upload">
+          <div><b>내 컴퓨터에서 올리기</b><span>워드·PDF·텍스트 파일 여러 개</span></div>
         </label>
         <label class="box">
-          <input type="radio" name="scope" value="all">
-          <div><b>드라이브 전체</b><span>최근 문서 30개까지만 읽어요</span></div>
+          <input type="radio" name="scope" value="folder" checked>
+          <div><b>드라이브 폴더 고르기</b><span>폴더 안 문서를 한 번에</span></div>
+        </label>
+        <label class="box">
+          <input type="radio" name="scope" value="files">
+          <div><b>드라이브 파일 고르기</b><span>파일 이름으로 찾아 여러 개 선택</span></div>
+        </label>
+        <label class="box">
+          <input type="radio" name="scope" value="keyword">
+          <div><b>키워드로 찾아오기</b><span>낱말이나 문장을 넣으면 관련 문서를 찾아요</span></div>
         </label>
       </div>
 
-      <div class="box" id="folder-box">
+      <!-- 1. 내 컴퓨터에서 올리기 -->
+      <div class="box" data-panel="upload" hidden>
+        <div class="drop" id="drop">
+          <b>파일을 여기로 끌어다 놓거나</b>
+          <button type="button" class="btn btn-ghost" id="pick">내 컴퓨터에서 고르기</button>
+          <input type="file" id="file-input" multiple hidden>
+          <small>워드(.docx), PDF, 텍스트(.txt) · 여러 개를 한 번에 골라도 돼요</small>
+        </div>
+        <div class="basket" id="upload-basket" hidden></div>
+      </div>
+
+      <!-- 2. 드라이브 폴더 고르기 -->
+      <div class="box" data-panel="folder">
         <label class="search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
           <span class="sr-only">폴더 이름 검색</span>
           <input type="text" id="folder-search" placeholder="폴더 이름으로 찾기 (예: 2025 기획안)">
         </label>
         <div class="path" id="folder-status">내 드라이브의 폴더를 불러오는 중이에요...</div>
-        <div id="folder-list" class="folder-list"></div>
+        <div id="folder-list" class="item-list"></div>
+      </div>
+
+      <!-- 3. 드라이브 파일 고르기 -->
+      <div class="box" data-panel="files" hidden>
+        <label class="search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <span class="sr-only">파일 이름 검색</span>
+          <input type="text" id="file-search" placeholder="파일 이름으로 찾기 (예: 온보딩)">
+        </label>
+        <div class="path" id="file-status">파일 이름을 입력하면 찾아드려요. 여러 번 검색해서 계속 담을 수 있어요.</div>
+        <div id="file-list" class="item-list"></div>
+        <div class="basket" id="file-basket" hidden></div>
+      </div>
+
+      <!-- 4. 키워드로 찾아오기 -->
+      <div class="box" data-panel="keyword" hidden>
+        <form class="search" id="keyword-form">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          <label for="keyword" class="sr-only">키워드나 문장</label>
+          <input type="text" id="keyword" placeholder="예: 신규 회원 온보딩 단계 줄이기">
+          <button type="submit" class="btn">관련 문서 찾기</button>
+        </form>
+        <div class="path" id="keyword-status">문서 본문까지 살펴서 관련 있을 것 같은 문서를 찾아요. 찾은 뒤 빼고 싶은 건 체크를 풀면 돼요.</div>
+        <div id="keyword-list" class="item-list"></div>
       </div>
 
       <div class="progress" id="progress" hidden>
@@ -154,7 +239,7 @@
       </div>
 
       <div class="actions">
-        <button type="button" class="btn" id="connect" disabled>이 폴더 읽어 오기</button>
+        <button type="button" class="btn" id="connect" disabled>폴더를 골라 주세요</button>
         <a class="btn" href="upload.html" id="next" hidden>다음: 읽을 문서 넣기 →</a>
       </div>
     </div>
@@ -162,105 +247,305 @@
 
   <script src="js/config.js"></script>
   <script src="js/google.js"></script>
+  <script src="js/files.js"></script>
   <script>
     const session = SnipGoogle.requireSession();
     if (session) document.getElementById('user-name').textContent = session.name + '님';
     document.getElementById('logout').addEventListener('click', () => SnipGoogle.signOut());
 
-    const listEl = document.getElementById('folder-list');
-    const statusEl = document.getElementById('folder-status');
-    const searchEl = document.getElementById('folder-search');
     const connectBtn = document.getElementById('connect');
     const nextBtn = document.getElementById('next');
-    let selected = null;
+
+    // 방법마다 고른 것을 따로 기억해요.
+    let selectedFolder = null;              // 2. 폴더 하나
+    const pickedFiles = new Map();          // 3. 이름으로 고른 드라이브 파일들 (id → 파일)
+    const keywordFiles = new Map();         // 4. 키워드로 찾아서 체크된 파일들
+    const uploads = [];                     // 1. 내 컴퓨터에서 읽은 파일들
 
     function scope() {
       return document.querySelector('input[name="scope"]:checked').value;
     }
 
     function updateButton() {
-      if (scope() === 'all') {
-        connectBtn.textContent = '드라이브 전체 읽어 오기';
-        connectBtn.disabled = false;
+      const n = {
+        upload: uploads.filter((u) => u.paragraphs).length,
+        files: pickedFiles.size,
+        keyword: keywordFiles.size,
+      };
+      const mode = scope();
+      if (mode === 'folder') {
+        connectBtn.textContent = selectedFolder ? '"' + selectedFolder.name + '" 읽어 오기' : '폴더를 골라 주세요';
+        connectBtn.disabled = !selectedFolder;
+      } else if (mode === 'upload') {
+        connectBtn.textContent = n.upload ? '올린 파일 ' + n.upload + '개로 시작하기' : '파일을 올려 주세요';
+        connectBtn.disabled = !n.upload;
       } else {
-        connectBtn.textContent = selected ? '"' + selected.name + '" 읽어 오기' : '폴더를 골라 주세요';
-        connectBtn.disabled = !selected;
+        connectBtn.textContent = n[mode] ? '고른 문서 ' + n[mode] + '개 읽어 오기' : '문서를 골라 주세요';
+        connectBtn.disabled = !n[mode];
       }
     }
 
-    // 폴더 목록을 그려요.
+    // 왼쪽에 체크 네모가 있는 한 줄을 만들어요.
+    function makeItem(label, selected, onClick, kind) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'item' + (selected ? ' selected' : '');
+      btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      const check = document.createElement('span');
+      check.className = 'check';
+      check.setAttribute('aria-hidden', 'true');
+      check.textContent = '✓';
+      const name = document.createElement('span');
+      name.textContent = label;
+      btn.append(check, name);
+      if (kind) {
+        const k = document.createElement('span');
+        k.className = 'kind';
+        k.textContent = kind;
+        btn.appendChild(k);
+      }
+      btn.addEventListener('click', () => onClick(btn));
+      return btn;
+    }
+    function setSelected(btn, on) {
+      btn.classList.toggle('selected', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    // 고른 것들을 칩으로 보여주고, 칩을 누르면 빼요.
+    function renderBasket(el, items, onRemove) {
+      el.innerHTML = '';
+      el.hidden = !items.length;
+      if (!items.length) return;
+      const title = document.createElement('b');
+      title.textContent = '고른 문서 ' + items.filter((it) => !it.error).length + '개';
+      el.appendChild(title);
+      items.forEach((it) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip' + (it.error ? ' error' : '');
+        chip.textContent = it.error ? it.name + ' · ' + it.error : it.name + (it.reading ? ' · 읽는 중...' : ' ✕');
+        chip.title = it.error || '누르면 빼요';
+        chip.addEventListener('click', () => onRemove(it));
+        el.appendChild(chip);
+      });
+    }
+
+    // ---------- 2. 드라이브 폴더 ----------
+    const folderList = document.getElementById('folder-list');
+    const folderStatus = document.getElementById('folder-status');
+    const folderSearch = document.getElementById('folder-search');
+
     async function loadFolders() {
-      statusEl.textContent = '내 드라이브의 폴더를 불러오는 중이에요...';
-      listEl.innerHTML = '';
+      folderStatus.textContent = '내 드라이브의 폴더를 불러오는 중이에요...';
+      folderList.innerHTML = '';
       try {
-        const folders = await SnipGoogle.listFolders(searchEl.value.trim());
-        statusEl.textContent = folders.length
+        const folders = await SnipGoogle.listFolders(folderSearch.value.trim());
+        folderStatus.textContent = folders.length
           ? '최근에 바뀐 순서로 보여드려요'
           : '폴더를 찾지 못했어요. 다른 이름으로 검색해 보세요.';
         folders.forEach((f) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'folder' + (selected && selected.id === f.id ? ' selected' : '');
-          const icon = document.createElement('span');
-          icon.className = 'icon';
-          const name = document.createElement('span');
-          name.textContent = f.name;
-          const check = document.createElement('span');
-          check.className = 'check';
-          check.setAttribute('aria-hidden', 'true');
-          check.textContent = '✓';
-          btn.setAttribute('aria-pressed', selected && selected.id === f.id ? 'true' : 'false');
-          btn.append(icon, name, check);
-          btn.addEventListener('click', () => {
-            selected = f;
-            listEl.querySelectorAll('.folder').forEach((el) => {
-              el.classList.remove('selected');
-              el.setAttribute('aria-pressed', 'false');
-            });
-            btn.classList.add('selected');
-            btn.setAttribute('aria-pressed', 'true');
+          folderList.appendChild(makeItem(f.name, selectedFolder && selectedFolder.id === f.id, (btn) => {
+            selectedFolder = f;
+            folderList.querySelectorAll('.item').forEach((el) => setSelected(el, false));
+            setSelected(btn, true);
             updateButton();
-          });
-          listEl.appendChild(btn);
+          }));
         });
       } catch (e) {
-        statusEl.textContent = e.message;
+        folderStatus.textContent = e.message;
       }
     }
 
-    let timer = null;
-    searchEl.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(loadFolders, 400);
-    });
-    document.querySelectorAll('input[name="scope"]').forEach((r) =>
-      r.addEventListener('change', () => {
-        document.getElementById('folder-box').hidden = scope() === 'all';
-        updateButton();
-      }),
-    );
+    // ---------- 3. 드라이브 파일 이름으로 고르기 ----------
+    const fileList = document.getElementById('file-list');
+    const fileStatus = document.getElementById('file-status');
+    const fileSearch = document.getElementById('file-search');
+    const fileBasket = document.getElementById('file-basket');
 
-    // 고른 곳의 문서를 하나씩 읽어 와요.
+    function fileKind(f) {
+      return SnipGoogle.READABLE[f.mimeType] || '';
+    }
+
+    function renderFileBasket() {
+      renderBasket(fileBasket, Array.from(pickedFiles.values()), (f) => {
+        pickedFiles.delete(f.id);
+        renderFileBasket();
+        searchFileNames();
+      });
+      updateButton();
+    }
+
+    async function searchFileNames() {
+      const name = fileSearch.value.trim();
+      fileList.innerHTML = '';
+      if (!name) {
+        fileStatus.textContent = '파일 이름을 입력하면 찾아드려요. 여러 번 검색해서 계속 담을 수 있어요.';
+        return;
+      }
+      fileStatus.textContent = '찾는 중이에요...';
+      try {
+        const files = await SnipGoogle.searchFiles(name);
+        fileStatus.textContent = files.length
+          ? '"' + name + '"이(가) 들어간 문서 ' + files.length + '개 · 누르면 담기고, 다시 누르면 빠져요'
+          : '찾지 못했어요. 구글 문서·구글 프레젠테이션만 찾을 수 있어요.';
+        files.forEach((f) => {
+          fileList.appendChild(makeItem(f.name, pickedFiles.has(f.id), (btn) => {
+            if (pickedFiles.has(f.id)) pickedFiles.delete(f.id);
+            else pickedFiles.set(f.id, f);
+            setSelected(btn, pickedFiles.has(f.id));
+            renderFileBasket();
+          }, fileKind(f)));
+        });
+      } catch (e) {
+        fileStatus.textContent = e.message;
+      }
+    }
+
+    // ---------- 4. 키워드로 찾아오기 ----------
+    const keywordList = document.getElementById('keyword-list');
+    const keywordStatus = document.getElementById('keyword-status');
+
+    document.getElementById('keyword-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('keyword').value.trim();
+      if (!text) return;
+      keywordList.innerHTML = '';
+      keywordFiles.clear();
+      updateButton();
+      keywordStatus.textContent = '드라이브에서 관련 문서를 찾는 중이에요...';
+      try {
+        const files = await SnipGoogle.searchByKeyword(text);
+        if (!files.length) {
+          keywordStatus.textContent = '관련 문서를 찾지 못했어요. 더 짧은 낱말로 다시 찾아보세요.';
+          return;
+        }
+        keywordStatus.textContent = '관련 있을 것 같은 문서 ' + files.length + '개를 찾아 모두 골라 뒀어요. 빼고 싶은 건 눌러서 체크를 풀어 주세요.';
+        files.forEach((f) => {
+          keywordFiles.set(f.id, f);
+          keywordList.appendChild(makeItem(f.name, true, (btn) => {
+            if (keywordFiles.has(f.id)) keywordFiles.delete(f.id);
+            else keywordFiles.set(f.id, f);
+            setSelected(btn, keywordFiles.has(f.id));
+            updateButton();
+          }, fileKind(f)));
+        });
+      } catch (err) {
+        keywordStatus.textContent = err.message;
+      }
+      updateButton();
+    });
+
+    // ---------- 1. 내 컴퓨터에서 올리기 ----------
+    // 파일은 서버로 보내지 않고, 이 브라우저 안에서 글자만 꺼내요.
+    const drop = document.getElementById('drop');
+    const fileInput = document.getElementById('file-input');
+    const uploadBasket = document.getElementById('upload-basket');
+    fileInput.accept = SnipFiles.ACCEPT;
+
+    function renderUploads() {
+      renderBasket(uploadBasket, uploads, (u) => {
+        if (u.reading) return;
+        uploads.splice(uploads.indexOf(u), 1);
+        renderUploads();
+      });
+      updateButton();
+    }
+
+    async function addUploads(fileListLike) {
+      const files = Array.from(fileListLike || []);
+      const entries = files.map((file) => ({ name: file.name, file, reading: true }));
+      uploads.push(...entries);
+      renderUploads();
+      for (const u of entries) {
+        try {
+          const text = await SnipFiles.readText(u.file);
+          u.paragraphs = text.split('\n').map((l) => l.trim()).filter(Boolean);
+        } catch (e) {
+          u.error = e.message || '읽지 못했어요';
+        }
+        u.reading = false;
+        renderUploads();
+      }
+    }
+
+    document.getElementById('pick').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => { addUploads(fileInput.files); fileInput.value = ''; });
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault();
+      drop.classList.remove('over');
+      addUploads(e.dataTransfer.files);
+    });
+
+    // ---------- 방법 바꾸기 ----------
+    let busy = false;
+    function showPanel() {
+      document.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== scope(); });
+      updateButton();
+    }
+    document.querySelectorAll('input[name="scope"]').forEach((r) => r.addEventListener('change', () => {
+      // 다른 방법으로 바꾸면 이전 진행 표시는 감춰요. (읽는 중이면 그대로 둬요)
+      if (!busy) document.getElementById('progress').hidden = true;
+      showPanel();
+    }));
+
+    let folderTimer = null;
+    folderSearch.addEventListener('input', () => {
+      clearTimeout(folderTimer);
+      folderTimer = setTimeout(loadFolders, 400);
+    });
+    let fileTimer = null;
+    fileSearch.addEventListener('input', () => {
+      clearTimeout(fileTimer);
+      fileTimer = setTimeout(searchFileNames, 400);
+    });
+
+    // ---------- 읽어 오기 ----------
     connectBtn.addEventListener('click', async () => {
-      const source = scope() === 'all'
-        ? { folderId: null, label: '드라이브 전체 (최근 문서)' }
-        : { folderId: selected.id, label: selected.name };
+      const mode = scope();
       const progress = document.getElementById('progress');
       const text = document.getElementById('progress-text');
       const bar = document.getElementById('progress-bar');
+      const sub = document.getElementById('progress-sub');
       progress.hidden = false;
       bar.style.width = '0%';
       connectBtn.disabled = true;
       nextBtn.hidden = true;
+      busy = true;
       try {
-        const lib = await SnipGoogle.buildLibrary(source, (done, total, name) => {
-          bar.style.width = total ? Math.round((done / total) * 100) + '%' : '100%';
-          text.textContent = total
-            ? '문서 읽는 중... ' + total + '개 중 ' + done + '개 완료' + (name ? ' · ' + name : '')
-            : '읽을 문서를 찾는 중...';
-        });
+        let lib;
+        if (mode === 'upload') {
+          sub.textContent = '내 컴퓨터에서 올린 파일은 이 브라우저에만 저장돼요.';
+          const docs = [];
+          let total = 0;
+          let skipped = 0;
+          uploads.filter((u) => u.paragraphs).forEach((u, i) => {
+            const size = u.paragraphs.join('\n').length;
+            if (docs.length >= SnipGoogle.MAX_DOCS || total + size > SnipGoogle.MAX_TOTAL_CHARS) { skipped++; return; }
+            total += size;
+            docs.push({ id: 'local-' + i, name: u.name, link: '', paragraphs: u.paragraphs });
+          });
+          bar.style.width = '100%';
+          lib = SnipGoogle.saveLibrary({ source: '내 컴퓨터 파일', docs, skipped, at: Date.now() });
+        } else {
+          sub.textContent = '구글 문서와 구글 프레젠테이션을 읽어요. 처음 한 번만 기다리면 돼요.';
+          let source;
+          if (mode === 'folder') source = { folderId: selectedFolder.id, label: selectedFolder.name };
+          else if (mode === 'files') source = { files: Array.from(pickedFiles.values()), label: '고른 드라이브 문서' };
+          else source = { files: Array.from(keywordFiles.values()), label: '키워드 "' + document.getElementById('keyword').value.trim() + '"' };
+          lib = await SnipGoogle.buildLibrary(source, (done, total, name) => {
+            bar.style.width = total ? Math.round((done / total) * 100) + '%' : '100%';
+            text.textContent = total
+              ? '문서 읽는 중... ' + total + '개 중 ' + done + '개 완료' + (name ? ' · ' + name : '')
+              : '읽을 문서를 찾는 중...';
+          });
+        }
         if (!lib.docs.length) {
-          text.textContent = '여기에는 읽을 수 있는 문서가 없어요. 구글 문서나 구글 프레젠테이션이 있는 폴더를 골라 주세요.';
+          text.textContent = mode === 'folder'
+            ? '여기에는 읽을 수 있는 문서가 없어요. 구글 문서나 구글 프레젠테이션이 있는 폴더를 골라 주세요.'
+            : '읽을 수 있는 문서가 없었어요. 다른 문서를 골라 주세요.';
           bar.style.width = '0%';
         } else {
           text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (lib.skipped ? ' (' + lib.skipped + '개는 너무 크거나 읽지 못해 건너뛰었어요)' : '');
@@ -269,15 +554,15 @@
       } catch (e) {
         text.textContent = e.message;
       } finally {
+        busy = false;
         updateButton();
       }
     });
 
-    // 이미 읽어 둔 폴더가 있으면 바로 다음으로 갈 수 있게 해요.
+    // 이미 읽어 둔 기획안이 있으면 바로 다음으로 갈 수 있게 해요.
     const existing = SnipGoogle.getLibrary();
     if (existing && existing.docs && existing.docs.length) {
-      const progress = document.getElementById('progress');
-      progress.hidden = false;
+      document.getElementById('progress').hidden = false;
       document.getElementById('progress-bar').style.width = '100%';
       document.getElementById('progress-text').textContent =
         '이미 연결된 곳: ' + existing.source + ' (문서 ' + existing.docs.length + '개). 다시 고르면 새로 읽어 와요.';
@@ -285,7 +570,7 @@
     }
 
     if (session) loadFolders();
-    updateButton();
+    showPanel();
   </script>
 
 </body>

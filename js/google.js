@@ -142,33 +142,61 @@
     return (await res.json()).files || [];
   }
 
-  // 읽을 수 있는 문서 목록 (폴더 하나 또는 드라이브 전체의 최근 문서)
+  const FILE_FIELDS = 'files(id,name,mimeType,modifiedTime,webViewLink)';
+
+  function readableTypes() {
+    return '(' + Object.keys(READABLE).map((t) => "mimeType='" + t + "'").join(' or ') + ') and trashed=false';
+  }
+
+  // 폴더 하나 안의 읽을 수 있는 문서 목록
   async function listDocs(folderId) {
-    const types = Object.keys(READABLE).map((t) => "mimeType='" + t + "'").join(' or ');
-    let q = '(' + types + ') and trashed=false';
-    if (folderId) q += " and '" + escapeQuery(folderId) + "' in parents";
     const res = await drive('files', {
-      q,
-      fields: 'files(id,name,mimeType,modifiedTime,webViewLink)',
+      q: readableTypes() + " and '" + escapeQuery(folderId) + "' in parents",
+      fields: FILE_FIELDS,
       orderBy: 'modifiedTime desc',
       pageSize: String(MAX_DOCS),
     });
     return (await res.json()).files || [];
   }
 
-  async function exportText(file) {
-    const res = await drive('files/' + encodeURIComponent(file.id) + '/export', { mimeType: 'text/plain' });
-    const text = await res.text();
-    return text
-      .replace(/\r/g, '')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+  // 파일 이름으로 문서 찾기
+  async function searchFiles(name) {
+    let q = readableTypes();
+    if (name) q += " and name contains '" + escapeQuery(name) + "'";
+    const res = await drive('files', {
+      q,
+      fields: FILE_FIELDS,
+      orderBy: 'modifiedTime desc',
+      pageSize: '30',
+    });
+    return (await res.json()).files || [];
+  }
+
+  // 키워드나 문장으로 관련 문서 찾기
+  // 구글 드라이브의 본문 검색(fullText)을 써서, 낱말 중 하나라도 들어 있는 문서를
+  // 관련 있는 순서대로 가져와요. 문장을 넣으면 두 글자 이상 낱말 몇 개로 나눠 찾아요.
+  async function searchByKeyword(text) {
+    const words = Array.from(new Set(
+      text.split(/[\s,.!?·"'“”‘’()\[\]]+/).map((w) => w.trim()).filter((w) => w.length >= 2),
+    )).slice(0, 6);
+    if (!words.length) return [];
+    const q = readableTypes() + ' and (' +
+      words.map((w) => "fullText contains '" + escapeQuery(w) + "'").join(' or ') + ')';
+    const res = await drive('files', { q, fields: FILE_FIELDS, pageSize: '15' });
+    return (await res.json()).files || [];
+  }
+
+  function saveLibrary(library) {
+    if (!write(localStorage, LIBRARY_KEY, library)) {
+      throw new Error('읽어 온 문서가 너무 커서 브라우저에 저장하지 못했어요. 문서 수를 줄여 주세요.');
+    }
+    return library;
   }
 
   // 문서들을 하나씩 읽어 오며 진행 상황을 알려줘요.
+  // source.folderId가 있으면 그 폴더의 문서를, source.files가 있으면 고른 문서들을 읽어요.
   async function buildLibrary(source, onProgress) {
-    const files = await listDocs(source.folderId);
+    const files = source.files ? source.files.slice(0, MAX_DOCS) : await listDocs(source.folderId);
     const docs = [];
     let total = 0;
     let skipped = 0;
@@ -186,11 +214,7 @@
       }
     }
     onProgress && onProgress(files.length, files.length, '');
-    const library = { source: source.label, docs, skipped, at: Date.now() };
-    if (!write(localStorage, LIBRARY_KEY, library)) {
-      throw new Error('읽어 온 문서가 너무 커서 브라우저에 저장하지 못했어요. 더 작은 폴더를 골라 주세요.');
-    }
-    return library;
+    return saveLibrary({ source: source.label, docs, skipped, at: Date.now() });
   }
 
   function getLibrary() {
@@ -202,6 +226,7 @@
 
   window.SnipGoogle = {
     MAX_DOCS,
+    MAX_TOTAL_CHARS,
     READABLE,
     hasClientId: () => Boolean(clientId()),
     signIn,
@@ -209,7 +234,10 @@
     getSession,
     requireSession,
     listFolders,
+    searchFiles,
+    searchByKeyword,
     buildLibrary,
+    saveLibrary,
     getLibrary,
     clearLibrary,
   };
