@@ -1,6 +1,6 @@
 // 구글 로그인과 드라이브 읽기를 담당하는 도우미예요. 여러 화면이 함께 써요.
 // 로그인 정보는 브라우저 탭을 닫으면 사라지고(sessionStorage),
-// 읽어 온 기획안은 이 브라우저에만 저장돼요(localStorage). 서버에는 남지 않아요.
+// 읽어 온 참고 문서는 이 브라우저에만 저장돼요(localStorage). 서버에는 남지 않아요.
 
 (function () {
   const SCOPES = 'openid email profile https://www.googleapis.com/auth/drive.readonly';
@@ -76,7 +76,7 @@
     });
 
     if (!google.accounts.oauth2.hasGrantedAllScopes(token, 'https://www.googleapis.com/auth/drive.readonly')) {
-      throw new Error('드라이브 읽기 권한에 체크해 주셔야 기획안을 찾을 수 있어요. 다시 로그인해 주세요.');
+      throw new Error('드라이브 읽기 권한에 체크해 주셔야 참고할 문서를 찾을 수 있어요. 다시 로그인해 주세요.');
     }
 
     const me = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {

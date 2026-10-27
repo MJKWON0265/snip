@@ -124,103 +124,130 @@
       text-align: center;
     }
 
-    /* ---------- 서비스 미리보기 두 칸 ---------- */
-    .grid {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
+    /* ---------- 움직이는 데모 ---------- */
+    .demo {
       border-bottom: 1px solid var(--line);
+      padding: 36px 32px 44px;
     }
-    .cell {
-      padding: 40px 32px;
-      border-right: 1px solid var(--line);
-    }
-    .cell:last-child { border-right: none; }
-
-    .desc {
-      font-family: var(--mono);
-      font-size: 19px;
-      line-height: 1.75;
-      margin-bottom: 36px;
+    .demo-caption {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 40px;
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: clamp(18px, 2vw, 24px);
       word-break: keep-all;
     }
-
-    /* 가운데: 문장이 드래그된 문서 모양 */
-    .doc {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      padding: 28px;
+    .cap-num {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      background: var(--ink);
+      padding: 6px 10px;
+    }
+    #cap-text { transition: opacity 0.3s; }
+    .demo-stage {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    .demo-doc {
       position: relative;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 24px 28px 32px;
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+      min-height: 300px;
     }
     .doc-head {
       display: flex;
+      align-items: center;
       gap: 6px;
       margin-bottom: 20px;
     }
-    .doc-head span {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--line);
-    }
-    .doc p {
-      font-size: 15px;
+    .doc-head span { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+    .doc-head em { font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 10px; }
+    .demo-doc p {
+      font-size: 16px;
       line-height: 1.9;
-      color: var(--muted);
+      color: var(--ink);
       margin-bottom: 12px;
       word-break: keep-all;
     }
-    .doc mark {
-      background: var(--orange-soft);
-      color: var(--ink);
-      border-bottom: 2px solid var(--orange);
+    .demo-doc p.faint { height: 12px; width: 70%; background: #ecece8; }
+    /* 드래그한 만큼 칠해지는 형광펜: --p 값(0~100%)만큼 칠해요 */
+    .hl {
+      --p: 0%;
+      background: linear-gradient(var(--orange-soft), var(--orange-soft)) no-repeat;
+      background-size: var(--p) 100%;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
       padding: 2px 0;
     }
-    .chip {
+    .hl.done { border-bottom: 2px solid var(--orange); }
+    .demo-find {
       position: absolute;
-      right: 24px;
-      bottom: -18px;
       background: var(--ink);
       color: #fff;
       font-family: var(--mono);
       font-size: 13px;
       padding: 10px 16px;
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.25s, transform 0.25s, background 0.15s;
+      pointer-events: none;
     }
-    .chip b { color: var(--orange); font-weight: 500; }
-
-    /* 오른쪽: 찾아낸 관련 파일 카드 */
-    .found {
+    .demo-find.show { opacity: 1; transform: none; }
+    .demo-find.press { background: var(--orange); color: var(--ink); }
+    .cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 3;
+      transition: transform 0.9s cubic-bezier(0.5, 0, 0.3, 1);
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+    }
+    .demo-found {
       background: var(--ink);
       color: #fff;
-      padding: 24px;
+      padding: 22px;
+      min-height: 300px;
+      opacity: 0.35;
+      transition: opacity 0.4s;
     }
-    .found h3 {
+    .demo-found.on { opacity: 1; }
+    .demo-found h3 {
       font-family: var(--mono);
       font-weight: 400;
       font-size: 13px;
-      letter-spacing: 0.08em;
-      color: #aaa;
-      margin-bottom: 18px;
+      letter-spacing: 0.04em;
+      color: #bbb;
+      margin-bottom: 14px;
     }
-    .card {
-      border: 1px solid #333;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .card:last-child { margin-bottom: 0; }
-    .card .file {
+    .scan { display: flex; flex-direction: column; gap: 6px; }
+    .scan span {
       font-family: var(--mono);
       font-size: 12px;
-      color: var(--orange);
-      margin-bottom: 6px;
+      color: #777;
+      transition: color 0.2s;
     }
-    .card .text {
-      font-size: 13px;
-      line-height: 1.6;
-      color: #ddd;
-      word-break: keep-all;
+    .scan span.lit { color: var(--orange); }
+    .scan.gone { display: none; }
+    .dcard {
+      border: 1px solid #3a3a3a;
+      padding: 14px;
+      margin-top: 12px;
+      opacity: 0;
+      transform: translateX(16px);
+      transition: opacity 0.45s, transform 0.45s;
     }
+    .dcard.show { opacity: 1; transform: none; }
+    .dcard .file { font-family: var(--mono); font-size: 12px; color: var(--orange); margin-bottom: 6px; }
+    .dcard .text { font-size: 14px; line-height: 1.6; color: #eee; word-break: keep-all; }
+    .dcard .tip { font-size: 12px; color: #aaa; margin-top: 8px; }
 
     /* ---------- 맨 아래 줄 ---------- */
     .steps {
@@ -243,12 +270,12 @@
       header { padding: 16px; }
       .frame { margin: 0 16px; }
       .hero-title { padding: 40px 20px 20px; }
-      .grid, .steps, .start { grid-template-columns: 1fr; }
+      .steps, .start, .demo-stage { grid-template-columns: 1fr; }
+      .demo { padding: 28px 20px 32px; }
       .start { padding: 32px 20px; gap: 24px; }
       .start .desc br { display: none; }
       .btn-lg { width: 100%; justify-content: center; padding: 22px 20px; font-size: 18px; }
-      .cell, .step { border-right: none; border-bottom: 1px solid var(--line); }
-      .cell { padding: 32px 20px; }
+      .step { border-right: none; border-bottom: 1px solid var(--line); }
       .desc { font-size: 16px; }
       header .btn { padding: 12px 16px; font-size: 13px; }
     }
@@ -261,7 +288,7 @@
       <div class="logo-mark">S</div>
       snip
     </a>
-    <a class="btn" href="folder.html">시작하기</a>
+    <a class="btn" href="upload.html">시작하기</a>
   </header>
 
   <main class="frame">
@@ -277,34 +304,47 @@
     </section>
 
     <section class="start">
-      <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>드라이브 속 놓친 기획안까지 찾아<br>참고할 부분을 보여드려요.</p>
+      <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>내 컴퓨터와 드라이브 속 놓친 문서까지 찾아<br>참고할 부분을 보여드려요.</p>
       <div>
-        <a class="btn btn-lg" href="folder.html">시작하기 →</a>
-        <p class="note">내 컴퓨터 파일은 로그인 없이, 구글 드라이브는 구글 로그인 후 쓸 수 있어요</p>
+        <a class="btn btn-lg" href="upload.html">시작하기 →</a>
       </div>
     </section>
 
-    <section class="grid">
-      <div class="cell">
-        <div class="doc">
-          <div class="doc-head"><span></span><span></span><span></span></div>
-          <p>이번 개편의 목표는 신규 사용자가 첫 화면에서 길을 잃지 않게 하는 것이다.</p>
-          <p><mark>온보딩 단계를 3단계 이하로 줄이고, 첫 행동을 바로 유도한다.</mark></p>
-          <p>세부 일정과 담당자는 다음 회의에서 확정한다.</p>
-          <div class="chip"><b>▸</b> 관련 파일 찾기</div>
-        </div>
+    <!-- 움직이는 데모: 문장을 드래그하면 참고할 문서가 오른쪽에 떠요 -->
+    <section class="demo" id="demo" aria-label="snip 사용 모습 데모">
+      <div class="demo-caption">
+        <span class="cap-num" id="cap-num">01</span>
+        <span id="cap-text">읽던 문서에서 궁금한 문장을 드래그하면</span>
       </div>
+      <div class="demo-stage">
+        <div class="demo-doc">
+          <div class="doc-head"><span></span><span></span><span></span><em>3분기 기획안 피드백.docx</em></div>
+          <p>전체적인 방향은 좋습니다. 다만 신규 사용자 관점에서 몇 가지 보완이 필요해 보입니다.</p>
+          <p><span class="hl" id="hl">신규 회원 온보딩 단계를 줄이는 방안을 검토해 주세요.</span></p>
+          <p>또한 첫 화면에서 무엇을 해야 하는지 바로 보이도록 정리가 필요합니다.</p>
+          <p class="faint"></p>
+          <div class="demo-find" id="find">▸ 관련 내용 찾기</div>
+          <svg class="cursor" id="cursor" width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M2 2v21l5.5-5 4 8.5 3.6-1.7-4-8.3H18z" fill="#161616" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </div>
 
-      <div class="cell">
-        <div class="found">
-          <h3>FOUND IN YOUR DRIVE</h3>
-          <div class="card">
-            <div class="file">온보딩_개선안_v3.docx</div>
-            <div class="text">"가입 후 첫 화면에서 할 일을 하나만 보여 주자"는 안이 있었어요.</div>
+        <div class="demo-found" id="found">
+          <h3 id="found-title">참고할 문서를 살펴보는 중...</h3>
+          <div class="scan" id="scan">
+            <span>2024 온보딩 개선안_v3.docx</span>
+            <span>가입 플로우 회의록_0412.pdf</span>
+            <span>23년 회고 정리.pptx</span>
+            <span>사용자 인터뷰 요약.docx</span>
+            <span>경쟁사 분석_2025.pdf</span>
           </div>
-          <div class="card">
-            <div class="file">23년_회고_정리.pdf</div>
+          <div class="dcard">
+            <div class="file">2024 온보딩 개선안_v3.docx</div>
+            <div class="text">"가입 후 첫 화면에서 할 일을 하나만 보여 주자"는 안이 있었어요.</div>
+            <div class="tip">이렇게 참고해 보세요 · 단계를 줄인 근거로 인용하기</div>
+          </div>
+          <div class="dcard">
+            <div class="file">23년 회고 정리.pptx</div>
             <div class="text">단계가 5개였을 때 이탈률이 높았다는 기록이 있어요.</div>
+            <div class="tip">이렇게 참고해 보세요 · 숫자로 설득하기</div>
           </div>
         </div>
       </div>
@@ -319,7 +359,7 @@
       <div class="step">
         <div class="num">02</div>
         <div class="name">Discover</div>
-        <div class="ko">드라이브 속 관련 부분을 찾아요</div>
+        <div class="ko">참고할 문서 속 관련 부분을 찾아요</div>
       </div>
       <div class="step">
         <div class="num">03</div>
@@ -329,6 +369,108 @@
     </section>
 
   </main>
+
+  <script>
+    // 첫 화면 데모: 커서가 문장을 드래그 → "관련 내용 찾기" 클릭 → 참고 문서를 훑고 → 카드가 떠요. 계속 되풀이해요.
+    (function () {
+      const doc = document.querySelector('.demo-doc');
+      const hl = document.getElementById('hl');
+      const cursor = document.getElementById('cursor');
+      const find = document.getElementById('find');
+      const found = document.getElementById('found');
+      const title = document.getElementById('found-title');
+      const scan = document.getElementById('scan');
+      const cards = document.querySelectorAll('.dcard');
+      const capNum = document.getElementById('cap-num');
+      const capText = document.getElementById('cap-text');
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      function caption(n, text) {
+        capText.style.opacity = 0;
+        setTimeout(() => { capNum.textContent = n; capText.textContent = text; capText.style.opacity = 1; }, 300);
+      }
+      // 문서 칸 기준으로 커서를 옮겨요.
+      function moveTo(x, y, ms) {
+        cursor.style.transitionDuration = (ms || 900) + 'ms';
+        cursor.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      }
+      function rectIn(el) {
+        const a = el.getBoundingClientRect();
+        const b = doc.getBoundingClientRect();
+        return { left: a.left - b.left, top: a.top - b.top, right: a.right - b.left, bottom: a.bottom - b.top };
+      }
+      function reset() {
+        hl.style.setProperty('--p', '0%');
+        hl.classList.remove('done');
+        find.classList.remove('show', 'press');
+        found.classList.remove('on');
+        title.textContent = '참고할 문서를 살펴보는 중...';
+        scan.classList.remove('gone');
+        scan.querySelectorAll('span').forEach((s) => s.classList.remove('lit'));
+        cards.forEach((c) => c.classList.remove('show'));
+      }
+
+      // 움직임을 줄이도록 설정한 사람에게는 마지막 장면만 보여줘요.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        hl.style.setProperty('--p', '100%');
+        hl.classList.add('done');
+        found.classList.add('on');
+        scan.classList.add('gone');
+        title.textContent = '참고할 문서에서 찾았어요';
+        cards.forEach((c) => c.classList.add('show'));
+        cursor.style.display = 'none';
+        caption('03', '파일을 일일이 찾지 않아도, 참고할 부분이 바로 떠요');
+        return;
+      }
+
+      async function play() {
+        while (true) {
+          reset();
+          caption('01', '읽던 문서에서 궁금한 문장을 드래그하면');
+          const r = rectIn(hl);
+          moveTo(doc.clientWidth - 60, doc.clientHeight - 40, 0);
+          await wait(500);
+          moveTo(r.left - 4, r.top + 2, 900);
+          await wait(1100);
+          // 드래그: 형광펜이 왼쪽부터 칠해지고 커서도 따라가요.
+          const steps = 30;
+          const end = rectIn(hl);
+          for (let i = 1; i <= steps; i++) {
+            hl.style.setProperty('--p', (i / steps) * 100 + '%');
+            const x = end.left + (end.right - end.left) * (i / steps);
+            moveTo(Math.min(x, doc.clientWidth - 30), end.top + 2, 40);
+            await wait(40);
+          }
+          hl.classList.add('done');
+          const box = rectIn(hl);
+          find.style.left = Math.max(16, box.left) + 'px';
+          find.style.top = (box.bottom + 12) + 'px';
+          find.classList.add('show');
+          await wait(600);
+          const f = rectIn(find);
+          moveTo(f.left + 30, f.top + 14, 600);
+          await wait(800);
+          find.classList.add('press');
+          await wait(250);
+          find.classList.remove('show');
+
+          caption('02', '내 컴퓨터·드라이브 속 참고할 문서를 알아서 훑고');
+          found.classList.add('on');
+          const names = scan.querySelectorAll('span');
+          for (let k = 0; k < 2; k++) {
+            for (const n of names) { n.classList.add('lit'); await wait(140); n.classList.remove('lit'); }
+          }
+          scan.classList.add('gone');
+          title.textContent = '참고할 문서에서 관련 부분 2곳을 찾았어요';
+
+          caption('03', '파일을 일일이 찾지 않아도, 참고할 부분이 바로 떠요');
+          for (const c of cards) { c.classList.add('show'); await wait(500); }
+          await wait(3800);
+        }
+      }
+      play();
+    })();
+  </script>
 
 </body>
 </html>
