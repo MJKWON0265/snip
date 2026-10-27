@@ -361,7 +361,17 @@
       return document.querySelector('input[name="scope"]:checked').value;
     }
 
+    // 지금 고른 것을 한 줄 글자로 만들어요. 읽어 온 뒤 고른 것이 바뀌면 "문서 열기"를 다시 감추려고 써요.
+    let builtKey = null;
+    function selectionKey() {
+      const mode = scope();
+      if (mode === 'upload') return mode + ':' + uploads.filter((u) => u.paragraphs).map((u) => u.name).join('|');
+      if (mode === 'folder') return mode + ':' + (selectedFolder ? selectedFolder.id : '');
+      return mode + ':' + Array.from((mode === 'files' ? pickedFiles : keywordFiles).keys()).join('|');
+    }
+
     function updateButton() {
+      nextBtn.hidden = !builtKey || builtKey !== selectionKey();
       const n = {
         upload: uploads.filter((u) => u.paragraphs).length,
         files: pickedFiles.size,
@@ -611,6 +621,8 @@
       progress.hidden = false;
       bar.style.width = '0%';
       connectBtn.disabled = true;
+      builtKey = null;
+      SnipGoogle.clearLibrary();
       nextBtn.hidden = true;
       busy = true;
       try {
@@ -634,6 +646,11 @@
           try { await SnipFiles.saveOriginals(originals); } catch (e) {}
           bar.style.width = '100%';
           lib = SnipGoogle.saveLibrary({ source: '내 컴퓨터 파일', docs, skipped, at: stamp });
+          // 내 컴퓨터 파일은 바로 읽혀서 기다릴 필요 없이 읽기 화면으로 가요.
+          if (docs.length) {
+            location.href = 'reader.html';
+            return;
+          }
         } else {
           sub.textContent = '구글 문서와 구글 프레젠테이션을 읽어요. 처음 한 번만 기다리면 돼요.';
           let source;
@@ -654,7 +671,7 @@
           bar.style.width = '0%';
         } else {
           text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (lib.skipped ? ' (' + lib.skipped + '개는 너무 크거나 읽지 못해 건너뛰었어요)' : '');
-          nextBtn.hidden = false;
+          builtKey = selectionKey();
         }
       } catch (e) {
         text.textContent = e.message;
@@ -664,16 +681,7 @@
       }
     });
 
-    // 이미 읽어 둔 참고 문서가 있으면 바로 다음으로 갈 수 있게 해요.
-    const existing = SnipGoogle.getLibrary();
-    if (existing && existing.docs && existing.docs.length) {
-      document.getElementById('progress').hidden = false;
-      document.getElementById('progress-bar').style.width = '100%';
-      document.getElementById('progress-text').textContent =
-        '이미 연결된 곳: ' + existing.source + ' (문서 ' + existing.docs.length + '개). 다시 고르면 새로 읽어 와요.';
-      nextBtn.hidden = false;
-    }
-
+    // 예전에 골라 둔 참고 문서는 보여주지 않아요. 이번에 고른 것만 써요.
     showWho();
     if (session) loadFolders();
     showPanel();

@@ -239,7 +239,7 @@
 
   <header>
     <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
-    <div class="meta">읽는 중: <span id="doc-name">3분기 기획안 피드백.docx</span> · <a href="upload.html">다른 문서</a></div>
+    <div class="meta">읽는 중: <span id="doc-name">3분기 기획안 피드백.docx</span> · 참고: <a href="folder.html" id="ref-name">고르기</a> · <a href="upload.html">다른 문서</a></div>
   </header>
 
   <main class="frame">
@@ -397,7 +397,15 @@
     const cardsEl = document.getElementById('cards');
     const examplesEl = document.getElementById('examples');
 
-    // 연결된 드라이브 문서가 있으면 함께 보내요. 없으면 주방이 예시 기획안을 써요.
+    // 머리글에 지금 쓰는 참고 문서를 보여줘요. 누르면 다시 고를 수 있어요.
+    (function () {
+      const lib = SnipGoogle.getLibrary();
+      if (lib && lib.docs && lib.docs.length) {
+        document.getElementById('ref-name').textContent = lib.source + ' (' + lib.docs.length + '개)';
+      }
+    })();
+
+    // 2단계에서 고른 참고 문서를 함께 보내요.
     function libraryForAI() {
       const lib = SnipGoogle.getLibrary();
       if (!lib || !lib.docs || !lib.docs.length) return null;
@@ -405,6 +413,18 @@
     }
 
     async function askAI(sentence) {
+      // 참고할 문서를 아직 고르지 않았으면 예시 문서로 찾지 않고, 고르러 가도록 안내해요.
+      if (!libraryForAI()) {
+        statusEl.className = 'note error';
+        statusEl.innerHTML = '';
+        const link = document.createElement('a');
+        link.href = 'folder.html';
+        link.textContent = '참고할 문서 고르기 →';
+        statusEl.append('아직 참고할 문서를 고르지 않았어요. ', link);
+        cardsEl.innerHTML = '';
+        examplesEl.hidden = true;
+        return;
+      }
       statusEl.className = 'note';
       statusEl.textContent = 'AI가 관련 부분을 찾는 중이에요... (10~20초 걸릴 수 있어요)';
       cardsEl.innerHTML = '';

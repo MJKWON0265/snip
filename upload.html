@@ -147,6 +147,8 @@
       const pasteOn = !document.getElementById('paste').hidden;
       const value = text.value.trim();
       try {
+        // 새 문서로 시작하니 예전에 골라 둔 참고 문서는 지워요. (섞이지 않게)
+        if ((!pasteOn && fileDoc) || (pasteOn && value)) SnipGoogle.clearLibrary();
         if (!pasteOn && fileDoc) {
           e.preventDefault();
           sessionStorage.setItem('snip-doc', JSON.stringify(fileDoc));
