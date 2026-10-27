@@ -79,12 +79,22 @@
     }
     .folder.selected { background: var(--orange-soft); font-weight: 700; }
     .folder.selected .icon { border-color: var(--orange); }
-    .folder .pick {
+    /* 오른쪽 체크 칸: 고르면 주황색으로 채워지고 ✓ 표시 */
+    .folder .check {
       margin-left: auto;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--orange);
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--line);
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      line-height: 1;
+      font-weight: 700;
+      color: transparent;
+      background: #fff;
     }
+    .folder.selected .check { background: var(--orange); border-color: var(--orange); color: #fff; }
 
     /* 문서 읽는 중 표시 */
     .progress {
@@ -195,11 +205,20 @@
           icon.className = 'icon';
           const name = document.createElement('span');
           name.textContent = f.name;
-          btn.append(icon, name);
+          const check = document.createElement('span');
+          check.className = 'check';
+          check.setAttribute('aria-hidden', 'true');
+          check.textContent = '✓';
+          btn.setAttribute('aria-pressed', selected && selected.id === f.id ? 'true' : 'false');
+          btn.append(icon, name, check);
           btn.addEventListener('click', () => {
             selected = f;
-            listEl.querySelectorAll('.folder').forEach((el) => el.classList.remove('selected'));
+            listEl.querySelectorAll('.folder').forEach((el) => {
+              el.classList.remove('selected');
+              el.setAttribute('aria-pressed', 'false');
+            });
             btn.classList.add('selected');
+            btn.setAttribute('aria-pressed', 'true');
             updateButton();
           });
           listEl.appendChild(btn);
