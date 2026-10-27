@@ -111,18 +111,31 @@
     return s;
   }
 
-  async function drive(path, params) {
+  // 구글에 요청을 보내요. 실패하면 구글이 알려준 이유(reason)를 오류에 담아 돌려줘요.
+  async function google(urlText, params) {
     const s = getSession();
     if (!s) throw new Error('로그인이 만료되었어요. 페이지를 새로고침한 뒤 다시 로그인해 주세요.');
-    const url = new URL('https://www.googleapis.com/drive/v3/' + path);
+    const url = new URL(urlText);
     Object.entries(params || {}).forEach(([k, v]) => url.searchParams.set(k, v));
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + s.token } });
     if (res.status === 401) {
       write(sessionStorage, SESSION_KEY, null);
       throw new Error('로그인이 만료되었어요. 페이지를 새로고침한 뒤 다시 로그인해 주세요.');
     }
-    if (!res.ok) throw new Error('드라이브에서 정보를 가져오지 못했어요. (' + res.status + ')');
+    if (!res.ok) {
+      let info = {};
+      try { info = (await res.json()).error || {}; } catch (e) {}
+      const err = new Error('드라이브에서 정보를 가져오지 못했어요. (' + res.status + ')');
+      err.status = res.status;
+      err.reason = (info.errors && info.errors[0] && info.errors[0].reason) || info.status || '';
+      err.detail = info.message || '';
+      throw err;
+    }
     return res;
+  }
+
+  function drive(path, params) {
+    return google('https://www.googleapis.com/drive/v3/' + path, params);
   }
 
   function escapeQuery(text) {
@@ -193,28 +206,89 @@
     return library;
   }
 
+  function toParagraphs(text) {
+    return text
+      .replace(/\r/g, '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
+  // 구글 문서·프레젠테이션을 글자(text/plain)로 내보내서 읽어요.
+  async function exportText(file) {
+    const res = await drive('files/' + encodeURIComponent(file.id) + '/export', { mimeType: 'text/plain' });
+    return toParagraphs(await res.text());
+  }
+
+  // 구글 문서·프레젠테이션 안의 글자 조각(textRun)을 차례대로 모아요.
+  function collectText(node, out) {
+    if (Array.isArray(node)) node.forEach((n) => collectText(n, out));
+    else if (node && typeof node === 'object') {
+      if (node.textRun && typeof node.textRun.content === 'string') out.push(node.textRun.content);
+      Object.keys(node).forEach((k) => { if (k !== 'textRun') collectText(node[k], out); });
+    }
+    return out;
+  }
+
+  // 내보내기(export)가 막힌 문서는 프레젠테이션/문서 API로 한 번 더 읽어 봐요.
+  // (예: 주인이 "보기 권한자는 다운로드 못 함"으로 막아 둔 문서)
+  async function readByApi(file) {
+    if (file.mimeType === 'application/vnd.google-apps.presentation') {
+      const res = await google('https://slides.googleapis.com/v1/presentations/' + encodeURIComponent(file.id), { fields: 'slides(pageElements)' });
+      const data = await res.json();
+      return (data.slides || []).flatMap((slide) => toParagraphs(collectText(slide.pageElements || [], []).join('')));
+    }
+    const res = await google('https://docs.googleapis.com/v1/documents/' + encodeURIComponent(file.id), { fields: 'body(content)' });
+    return toParagraphs(collectText((await res.json()).body || {}, []).join(''));
+  }
+
+  function isApiOff(e) {
+    // 구글 클라우드에서 그 API를 아직 켜지 않았을 때 나오는 오류예요.
+    return e.status === 403 && (e.reason === 'accessNotConfigured' || e.reason === 'SERVICE_DISABLED' || /has not been used|is disabled/i.test(e.detail || ''));
+  }
+
+  // 파일 하나를 읽어요. 실패하면 왜 실패했는지 짧은 이름으로 알려줘요.
+  async function readFileText(file) {
+    try {
+      return { paragraphs: await exportText(file) };
+    } catch (e) {
+      if (/로그인이 만료/.test(e.message)) throw e;
+      try {
+        return { paragraphs: await readByApi(file) };
+      } catch (e2) {
+        if (/로그인이 만료/.test(e2.message)) throw e2;
+        const which = file.mimeType === 'application/vnd.google-apps.presentation' ? 'slides' : 'docs';
+        if (isApiOff(e2)) return { problem: 'api-off-' + which };
+        if (e.reason === 'cannotDownloadFile' || e.reason === 'cannotExportFile') return { problem: 'no-download' };
+        if (e.reason === 'exportSizeLimitExceeded') return { problem: 'too-big' };
+        console.warn('문서를 읽지 못했어요', file.name, e, e2);
+        return { problem: 'error-' + (e2.status || e.status || '?') };
+      }
+    }
+  }
+
   // 문서들을 하나씩 읽어 오며 진행 상황을 알려줘요.
   // source.folderId가 있으면 그 폴더의 문서를, source.files가 있으면 고른 문서들을 읽어요.
   async function buildLibrary(source, onProgress) {
     const files = source.files ? source.files.slice(0, MAX_DOCS) : await listDocs(source.folderId);
     const docs = [];
+    const problems = {}; // 못 읽은 이유별 개수
     let total = 0;
     let skipped = 0;
+    const note = (why) => { problems[why] = (problems[why] || 0) + 1; skipped++; };
     for (let i = 0; i < files.length; i++) {
       onProgress && onProgress(i, files.length, files[i].name);
-      try {
-        const paragraphs = await exportText(files[i]);
-        const size = paragraphs.join('\n').length;
-        if (!paragraphs.length) continue;
-        if (total + size > MAX_TOTAL_CHARS) { skipped++; continue; }
-        total += size;
-        docs.push({ id: files[i].id, name: files[i].name, link: files[i].webViewLink || '', paragraphs });
-      } catch (e) {
-        skipped++;
-      }
+      const got = await readFileText(files[i]);
+      if (got.problem) { note(got.problem); continue; }
+      const paragraphs = got.paragraphs;
+      if (!paragraphs.length) { note('empty'); continue; }
+      const size = paragraphs.join('\n').length;
+      if (total + size > MAX_TOTAL_CHARS) { note('over-limit'); continue; }
+      total += size;
+      docs.push({ id: files[i].id, name: files[i].name, link: files[i].webViewLink || '', paragraphs });
     }
     onProgress && onProgress(files.length, files.length, '');
-    return saveLibrary({ source: source.label, docs, skipped, at: Date.now() });
+    return saveLibrary({ source: source.label, docs, skipped, problems, at: Date.now() });
   }
 
   function getLibrary() {
