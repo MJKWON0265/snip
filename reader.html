@@ -12,7 +12,7 @@
     /* 왼쪽 문서 + 오른쪽 결과 칸 */
     .split {
       display: grid;
-      grid-template-columns: 1fr 440px;
+      grid-template-columns: minmax(0, 1fr) minmax(480px, 44%);
       min-height: calc(100vh - 81px);
     }
 
@@ -24,7 +24,7 @@
       gap: 16px;
     }
     .doc h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
-    .doc p { font-size: 17px; line-height: 1.85; color: var(--muted); word-break: keep-all; }
+    .doc p { font-size: 17px; line-height: 1.85; color: var(--ink); word-break: keep-all; }
     .doc mark {
       background: var(--orange-soft);
       color: var(--ink);
@@ -55,24 +55,24 @@
       gap: 8px;
       word-break: keep-all;
     }
-    .empty b { font-size: 17px; }
-    .empty span { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .empty b { font-size: 19px; }
+    .empty span { font-size: 16px; color: var(--muted); line-height: 1.6; }
     #found { display: flex; flex-direction: column; gap: 16px; }
     .picked {
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 17px;
+      line-height: 1.65;
       background: var(--orange-soft);
       border-left: 4px solid var(--orange);
       padding: 12px 14px;
     }
-    .note { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .note { font-family: var(--mono); font-size: 14px; color: var(--muted); line-height: 1.6; }
     .note.error { color: #b3261e; }
     .cards, #examples { display: flex; flex-direction: column; gap: 16px; }
 
     /* 오른쪽 결과 칸 */
     .results {
       background: var(--panel);
-      padding: 28px;
+      padding: 32px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -80,29 +80,29 @@
     .card {
       background: #fff;
       border: 1px solid var(--line);
-      padding: 20px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
-    .card .file { font-family: var(--mono); font-size: 13px; color: var(--orange); }
+    .card .file { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--orange-ink); }
     .card blockquote {
-      font-size: 15px;
-      line-height: 1.7;
+      font-size: 17px;
+      line-height: 1.75;
       background: var(--bg);
       padding: 12px 14px;
       word-break: keep-all;
     }
-    .card .why { font-size: 14px; color: var(--muted); }
+    .card .why { font-size: 16px; line-height: 1.65; color: var(--muted); }
     .card .tip {
-      font-size: 14px;
-      line-height: 1.65;
+      font-size: 16px;
+      line-height: 1.7;
       background: var(--ink);
       color: #eee;
       padding: 12px 14px;
     }
-    .card .tip b { color: var(--orange); font-weight: 500; font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; }
-    .card a.open { font-size: 15px; font-weight: 500; color: var(--ink); }
+    .card .tip b { color: var(--orange); font-weight: 500; font-family: var(--mono); font-size: 13px; letter-spacing: 0.06em; }
+    .card a.open { font-size: 16px; font-weight: 500; color: var(--ink); }
 
     @media (max-width: 900px) {
       .split { grid-template-columns: 1fr; }
@@ -150,21 +150,21 @@
             <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
             <div class="why">왜 관련 있나요: [이유 한 줄]</div>
             <div class="tip"><b>이렇게 참고해 보세요</b><br>[활용 제안 한두 줄]</div>
-            <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+            <a class="open" href="original.html" target="_blank">원본에서 이 부분 보기 ↗</a>
           </div>
 
           <div class="card">
             <div class="file">가입 플로우 회의록_0412.pdf</div>
             <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
             <div class="why">왜 관련 있나요: [이유 한 줄]</div>
-            <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+            <a class="open" href="original.html" target="_blank">원본에서 이 부분 보기 ↗</a>
           </div>
 
           <div class="card">
             <div class="file">23년 회고 정리.pdf</div>
             <blockquote>[관련 문단 발췌 2~3줄]</blockquote>
             <div class="why">왜 관련 있나요: [이유 한 줄]</div>
-            <a class="open" href="original.html">원본에서 이 부분 보기 →</a>
+            <a class="open" href="original.html" target="_blank">원본에서 이 부분 보기 ↗</a>
           </div>
           </div>
         </div>
@@ -312,10 +312,13 @@
       const b = document.createElement('b');
       b.textContent = '이렇게 참고해 보세요';
       tip.append(b, document.createElement('br'), r.tip);
-      const link = add('a', 'open', '원본에서 이 부분 보기 →');
+      // 원본은 새 탭으로 열어서, 읽던 문서가 이 탭에 그대로 남아 있게 해요.
+      // 새 탭은 이 탭의 sessionStorage를 못 읽어서, 고른 카드는 localStorage에 넣어 전해줘요.
+      const link = add('a', 'open', '원본에서 이 부분 보기 ↗ (새 탭)');
       link.href = 'original.html';
+      link.target = '_blank';
       link.addEventListener('click', () => {
-        try { sessionStorage.setItem('snip-hit', JSON.stringify(r)); } catch (e) {}
+        try { localStorage.setItem('snip-hit', JSON.stringify(r)); } catch (e) {}
       });
       return card;
     }

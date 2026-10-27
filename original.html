@@ -46,7 +46,7 @@
       flex-direction: column;
       gap: 8px;
     }
-    .hit small { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--orange); }
+    .hit small { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--orange-ink); }
     .hit p { font-size: 17px; line-height: 1.75; }
 
     /* 오른쪽: 이 파일 안의 관련 부분 목록 */
@@ -88,7 +88,7 @@
 
   <main class="frame">
     <div class="bar-top">
-      <a class="back" href="reader.html">← 읽던 문서로</a>
+      <a class="back" href="reader.html" id="back">← 이 탭 닫고 읽던 문서로</a>
       <span class="name" id="file-name">2024 온보딩 개선안_v3.docx</span>
       <a class="btn btn-ghost" id="drive-link" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 열기</a>
     </div>
@@ -119,7 +119,15 @@
   <script>
     // 결과 카드에서 고른 문단이 있으면, 그 파일 전체를 보여주고 해당 문단을 형광펜으로 칠해요.
     let hit = null;
-    try { hit = JSON.parse(sessionStorage.getItem('snip-hit')); } catch (e) {}
+    try { hit = JSON.parse(localStorage.getItem('snip-hit')); } catch (e) {}
+
+    // 새 탭으로 열렸으면 이 탭만 닫아요. 읽던 문서는 원래 탭에 그대로 있어요.
+    // (탭을 닫을 수 없는 경우엔 링크대로 읽기 화면으로 이동해요.)
+    document.getElementById('back').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.close();
+      setTimeout(() => { location.href = 'reader.html'; }, 200);
+    });
     if (hit && Array.isArray(hit.paragraphs)) {
       document.getElementById('file-name').textContent = hit.file;
       if (hit.link) document.getElementById('drive-link').href = hit.link;
