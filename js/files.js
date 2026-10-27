@@ -1,8 +1,8 @@
-// 내 컴퓨터 파일(워드·PDF·텍스트)에서 글자만 꺼내는 도우미예요. 여러 화면이 함께 써요.
+// 내 컴퓨터 파일(워드·PDF·파워포인트·텍스트)에서 글자만 꺼내는 도우미예요. 여러 화면이 함께 써요.
 // 파일은 서버로 보내지 않고, 이 브라우저 안에서만 읽어요.
 
 (function () {
-  const ACCEPT = '.docx,.pdf,.txt,.md';
+  const ACCEPT = '.docx,.pdf,.pptx,.txt,.md';
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -42,15 +42,35 @@
     return pages.join('\n\n');
   }
 
+  // 파워포인트(.pptx)는 사실 압축 파일이에요. 풀어서 슬라이드마다 들어 있는 글자(<a:t>)를 꺼내요.
+  async function readPptx(file) {
+    await loadScript('vendor/jszip.min.js');
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const slides = Object.keys(zip.files)
+      .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+      .sort((a, b) => Number(a.match(/(\d+)\.xml$/)[1]) - Number(b.match(/(\d+)\.xml$/)[1]));
+    const out = [];
+    for (const name of slides) {
+      const xml = new DOMParser().parseFromString(await zip.file(name).async('string'), 'application/xml');
+      // 한 문단(<a:p>) 안의 글자 조각(<a:t>)을 이어 붙여 한 줄로 만들어요.
+      const lines = Array.from(xml.getElementsByTagName('a:p'))
+        .map((p) => Array.from(p.getElementsByTagName('a:t')).map((t) => t.textContent).join('').trim())
+        .filter(Boolean);
+      if (lines.length) out.push(lines.join('\n'));
+    }
+    return out.join('\n\n');
+  }
+
   // 파일 하나를 읽어서 정리된 글자를 돌려줘요. 못 읽으면 이유를 담은 오류를 내요.
   async function readText(file) {
     const ext = file.name.split('.').pop().toLowerCase();
     let text;
     if (ext === 'docx') text = await readDocx(file);
     else if (ext === 'pdf') text = await readPdf(file);
+    else if (ext === 'pptx') text = await readPptx(file);
     else if (ext === 'txt' || ext === 'md') text = await file.text();
-    else if (ext === 'doc' || ext === 'hwp') throw new Error('예전 워드(.doc)와 한글(.hwp)은 아직 못 읽어요. .docx나 PDF로 저장해서 올려 주세요.');
-    else throw new Error('이 파일 형식은 아직 못 읽어요. 워드(.docx), PDF, 텍스트(.txt)를 올려 주세요.');
+    else if (ext === 'doc' || ext === 'hwp' || ext === 'ppt') throw new Error('예전 워드(.doc)·파워포인트(.ppt)와 한글(.hwp)은 아직 못 읽어요. .docx, .pptx나 PDF로 저장해서 올려 주세요.');
+    else throw new Error('이 파일 형식은 아직 못 읽어요. 워드(.docx), 파워포인트(.pptx), PDF, 텍스트(.txt)를 올려 주세요.');
 
     text = (text || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
     if (!text) throw new Error('파일에서 글자를 찾지 못했어요. 스캔한 이미지 PDF는 글자를 읽을 수 없어요.');

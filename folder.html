@@ -3,29 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>폴더 연결 · snip</title>
+  <title>참고할 문서 고르기 · snip</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* 기획안을 가져오는 방법 네 가지 */
+    /* 큰 두 갈래: 내 컴퓨터 / 구글 드라이브 */
+    .source {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .source label {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 24px;
+      cursor: pointer;
+      word-break: keep-all;
+    }
+    .source input { accent-color: var(--orange); width: 20px; height: 20px; flex: none; }
+    .source .src-icon { width: 44px; height: 44px; flex: none; }
+    .source b { display: block; font-size: 18px; margin-bottom: 4px; }
+    .source span { font-size: 14px; color: var(--muted); }
+    .source label:has(input:checked) { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+
+    /* 구글 드라이브 안에서 고르는 세 가지 방법 (작은 탭 모양) */
     .scope {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--line);
+      background: var(--panel);
     }
     .scope label {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: flex-start;
-      padding: 18px;
+      padding: 14px 16px;
       cursor: pointer;
+      border-right: 1px solid var(--line);
+      font-size: 13px;
+      color: var(--muted);
+      word-break: keep-all;
     }
-    .scope input { accent-color: var(--orange); width: 18px; height: 18px; margin-top: 3px; flex: none; }
-    .scope b { display: block; font-size: 16px; margin-bottom: 4px; word-break: keep-all; }
-    .scope span { font-size: 14px; color: var(--muted); word-break: keep-all; }
-    .scope label:has(input:checked) { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); }
+    .scope label:last-child { border-right: none; }
+    .scope input { accent-color: var(--orange); width: 16px; height: 16px; margin-top: 2px; flex: none; }
+    .scope b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 2px; }
+    .scope label:has(input:checked) { background: var(--orange-soft); }
 
     /* 검색 칸 */
     .search {
@@ -163,11 +188,10 @@
     [hidden] { display: none !important; }
     button.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
-    @media (max-width: 900px) {
-      .scope { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 520px) {
-      .scope { grid-template-columns: 1fr; }
+    @media (max-width: 700px) {
+      .source, .scope { grid-template-columns: 1fr; }
+      .scope label { border-right: none; border-bottom: 1px solid var(--line); }
+      .scope label:last-child { border-bottom: none; }
     }
   </style>
 </head>
@@ -180,25 +204,37 @@
 
   <main class="frame">
     <div class="page">
-      <div class="label"><span class="dot"></span>STEP 1 / 3 · 참고할 기획안 모으기</div>
-      <h1 class="page-title">참고할 기획안을 어디서 가져올까요?</h1>
+      <div class="label"><span class="dot"></span>STEP 2 / 3 · 참고할 문서 고르기</div>
+      <h1 class="page-title">참고할 문서를 어디서 불러올까요?</h1>
+      <p class="page-sub">예전 기획안, 논문, 수업 자료처럼 참고하고 싶은 문서를 골라 주세요. 그 안에서 관련 부분을 찾아드려요.</p>
 
-      <div class="scope">
+      <!-- 먼저 큰 두 갈래: 내 컴퓨터 / 구글 드라이브 -->
+      <div class="source">
         <label class="box">
-          <input type="radio" name="scope" value="upload" checked>
-          <div><b>내 컴퓨터에서 올리기</b><span>워드·PDF·텍스트 파일 여러 개</span></div>
+          <input type="radio" name="source" value="computer" checked>
+          <svg class="src-icon" viewBox="0 0 48 48" fill="none" stroke="#161616" stroke-width="3" aria-hidden="true"><rect x="5" y="8" width="38" height="26" rx="3"/><path d="M17 42h14M24 34v8"/></svg>
+          <div><b>내 컴퓨터에서 불러오기</b><span>워드·파워포인트·PDF·텍스트 파일 · 로그인 없이</span></div>
         </label>
         <label class="box">
-          <input type="radio" name="scope" value="folder">
-          <div><b>드라이브 폴더 고르기</b><span>폴더 안 문서를 한 번에</span></div>
+          <input type="radio" name="source" value="drive">
+          <svg class="src-icon" viewBox="0 0 87.3 78" aria-hidden="true"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+          <div><b>구글 드라이브에서 불러오기</b><span>구글 문서·프레젠테이션 · 구글 로그인 필요</span></div>
         </label>
-        <label class="box">
+      </div>
+
+      <!-- 구글 드라이브를 고르고 로그인하면 보이는 세 가지 방법 -->
+      <div class="scope" id="drive-ways" hidden>
+        <label>
+          <input type="radio" name="scope" value="folder" checked>
+          <span><b>폴더 고르기</b>폴더 안 문서를 한 번에</span>
+        </label>
+        <label>
           <input type="radio" name="scope" value="files">
-          <div><b>드라이브 파일 고르기</b><span>파일 이름으로 찾아 여러 개 선택</span></div>
+          <span><b>파일 각각 고르기</b>이름으로 찾아 여러 개</span>
         </label>
-        <label class="box">
+        <label>
           <input type="radio" name="scope" value="keyword">
-          <div><b>키워드로 찾아오기</b><span>낱말이나 문장을 넣으면 관련 문서를 찾아요</span></div>
+          <span><b>키워드로 찾아오기</b>관련 문서를 알아서 찾아요</span>
         </label>
       </div>
 
@@ -216,7 +252,7 @@
           <b>파일을 여기로 끌어다 놓거나</b>
           <button type="button" class="btn btn-ghost" id="pick">내 컴퓨터에서 고르기</button>
           <input type="file" id="file-input" multiple hidden>
-          <small>워드(.docx), PDF, 텍스트(.txt) · 여러 개를 한 번에 골라도 돼요</small>
+          <small>워드(.docx), 파워포인트(.pptx), PDF, 텍스트(.txt) · 여러 개를 한 번에 골라도 돼요</small>
         </div>
         <div class="basket" id="upload-basket" hidden></div>
       </div>
@@ -226,7 +262,7 @@
         <label class="search">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
           <span class="sr-only">폴더 이름 검색</span>
-          <input type="text" id="folder-search" placeholder="폴더 이름으로 찾기 (예: 2025 기획안)">
+          <input type="text" id="folder-search" placeholder="폴더 이름으로 찾기 (예: 2025 프로젝트)">
         </label>
         <div class="path" id="folder-status">내 드라이브의 폴더를 불러오는 중이에요...</div>
         <div id="folder-list" class="item-list"></div>
@@ -263,8 +299,9 @@
       </div>
 
       <div class="actions">
+        <a class="btn btn-ghost" href="upload.html">← 이전</a>
         <button type="button" class="btn" id="connect" disabled>폴더를 골라 주세요</button>
-        <a class="btn" href="upload.html" id="next" hidden>다음: 읽을 문서 넣기 →</a>
+        <a class="btn" href="reader.html" id="next" hidden>문서 열기 →</a>
       </div>
     </div>
   </main>
@@ -318,7 +355,9 @@
     const keywordFiles = new Map();         // 4. 키워드로 찾아서 체크된 파일들
     const uploads = [];                     // 1. 내 컴퓨터에서 읽은 파일들
 
+    // 지금 고른 방법: 내 컴퓨터면 'upload', 드라이브면 폴더/파일/키워드 중 하나
     function scope() {
+      if (document.querySelector('input[name="source"]:checked').value === 'computer') return 'upload';
       return document.querySelector('input[name="scope"]:checked').value;
     }
 
@@ -540,11 +579,12 @@
     function showPanel() {
       const needLogin = scope() !== 'upload' && !session;
       gate.hidden = !needLogin;
+      document.getElementById('drive-ways').hidden = scope() === 'upload' || needLogin;
       document.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = needLogin || p.dataset.panel !== scope(); });
       updateButton();
       connectBtn.hidden = needLogin;
     }
-    document.querySelectorAll('input[name="scope"]').forEach((r) => r.addEventListener('change', () => {
+    document.querySelectorAll('input[name="scope"], input[name="source"]').forEach((r) => r.addEventListener('change', () => {
       // 다른 방법으로 바꾸면 이전 진행 표시는 감춰요. (읽는 중이면 그대로 둬요)
       if (!busy) document.getElementById('progress').hidden = true;
       showPanel();
@@ -624,7 +664,7 @@
       }
     });
 
-    // 이미 읽어 둔 기획안이 있으면 바로 다음으로 갈 수 있게 해요.
+    // 이미 읽어 둔 참고 문서가 있으면 바로 다음으로 갈 수 있게 해요.
     const existing = SnipGoogle.getLibrary();
     if (existing && existing.docs && existing.docs.length) {
       document.getElementById('progress').hidden = false;
