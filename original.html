@@ -133,7 +133,28 @@
 
   <a class="btn float-open" id="float-open" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 원본 열기 ↗</a>
 
+  <script src="js/files.js"></script>
   <script>
+    // 내 컴퓨터에서 올린 파일이면, 이 브라우저에 보관해 둔 원본 파일을 열 수 있게 해요.
+    // PDF와 텍스트는 새 탭에서 바로 보이고, 워드(.docx)는 내려받아져서 워드로 열려요.
+    async function openLocalOriginal(hit, buttons) {
+      if (!hit.id || !hit.id.startsWith('local-')) return;
+      let file = null;
+      try { file = await SnipFiles.getOriginal(hit.id); } catch (e) {}
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const blob = ext === 'txt' || ext === 'md'
+        ? new Blob([file], { type: 'text/plain;charset=utf-8' })
+        : file;
+      const url = URL.createObjectURL(blob);
+      buttons.forEach((b) => {
+        b.href = url;
+        b.textContent = '원본 파일 열기 ↗';
+        if (ext !== 'pdf' && ext !== 'txt' && ext !== 'md') b.download = file.name;
+        b.hidden = false;
+      });
+    }
+
     // 결과 카드에서 고른 문단이 있으면, 그 파일 전체를 보여주고 해당 문단을 형광펜으로 칠해요.
     let hit = null;
     try { hit = JSON.parse(localStorage.getItem('snip-hit')); } catch (e) {}
@@ -147,12 +168,14 @@
     });
     if (hit && Array.isArray(hit.paragraphs)) {
       document.getElementById('file-name').textContent = hit.file;
-      if (hit.link) document.getElementById('drive-link').href = hit.link;
-      else document.getElementById('drive-link').hidden = true;
-      // 떠 있는 버튼도 같은 원본으로 이어져요. 내 컴퓨터에서 올린 파일은 드라이브 링크가 없어서 숨겨요.
-      const floatOpen = document.getElementById('float-open');
-      if (hit.link) floatOpen.href = hit.link;
-      else floatOpen.hidden = true;
+      // 위쪽 버튼과 오른쪽 아래 떠 있는 버튼은 같은 원본으로 이어져요.
+      const openButtons = [document.getElementById('drive-link'), document.getElementById('float-open')];
+      if (hit.link) {
+        openButtons.forEach((b) => { b.href = hit.link; });
+      } else {
+        openButtons.forEach((b) => { b.hidden = true; });
+        openLocalOriginal(hit, openButtons);
+      }
       const doc = document.getElementById('doc');
       doc.innerHTML = '';
       const where = document.createElement('span');
