@@ -106,39 +106,11 @@
       <h1 class="page-title">먼저, 지금 읽을 문서를 넣어 주세요</h1>
       <p class="page-sub">이 문서를 읽다가 궁금한 문장을 드래그하게 돼요. 받은 피드백, 읽고 있는 논문처럼 지금 읽어야 하는 문서 <b>하나</b>면 돼요.</p>
 
-      <!-- 문서를 왜 두 번 넣는지 한눈에 보여주는 설명 -->
-      <section class="how" aria-label="snip은 이렇게 써요">
-        <div class="how-flow">
-          <div class="how-card on">
-            <span class="how-num">1</span>
-            <b>읽을 문서 1개</b>
-            <span>지금 읽는 문서. 여기서 문장을 드래그해요.</span>
-          </div>
-          <div class="how-arrow" aria-hidden="true">+</div>
-          <div class="how-card">
-            <span class="how-num">2</span>
-            <b>참고할 문서 여러 개</b>
-            <span>snip이 대신 뒤져볼 내 자료들이에요.</span>
-          </div>
-          <div class="how-arrow" aria-hidden="true">→</div>
-          <div class="how-card">
-            <span class="how-num">3</span>
-            <b>관련 부분 + 활용 제안</b>
-            <span>드래그한 문장과 관련된 부분만 모아 보여줘요.</span>
-          </div>
-        </div>
-        <table class="how-examples">
-          <thead><tr><th></th><th>① 읽을 문서</th><th>② 참고할 문서</th></tr></thead>
-          <tbody>
-            <tr><th>학생·연구자</th><td>지금 읽는 논문, 과제 안내문</td><td>모아 둔 선행 연구 논문, 수업 자료</td></tr>
-            <tr><th>기획자</th><td>받은 피드백, 회의록</td><td>예전 기획서, 보고서, 회의록</td></tr>
-          </tbody>
-        </table>
-        <div class="how-try">
-          <span>문서가 없어도 괜찮아요. 예시 문서로 먼저 드래그해 볼 수 있어요.</span>
-          <button type="button" class="btn btn-ghost" data-sample>예시로 먼저 해 보기 →</button>
-        </div>
-      </section>
+      <!-- 처음이라 잘 모르겠으면 예시 문서로 먼저 해 볼 수 있어요 -->
+      <div class="how-try box">
+        <span>처음이라 잘 모르겠다면? 예시 문서로 먼저 해 볼 수 있어요.</span>
+        <button type="button" class="btn btn-ghost" data-sample>예시로 해 보기 →</button>
+      </div>
 
       <div class="current" id="current" hidden>
         <div><small>지금 읽는 문서</small><b id="current-name"></b></div>
@@ -185,8 +157,6 @@
       document.getElementById('current').hidden = false;
       document.getElementById('current-name').textContent = currentDoc.title;
       document.querySelector('.page-title').textContent = '읽을 문서를 바꾸려면 새 문서를 넣어 주세요';
-      // 이미 써 본 사람에게는 설명 상자를 접어 둬요. (예시로 해 본 사람에게는 계속 보여줘요)
-      if (!currentDoc.sample) document.querySelector('.how').hidden = true;
     }
 
     // 탭을 누르면 해당 칸만 보이게 바꿔요.

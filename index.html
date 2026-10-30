@@ -119,16 +119,7 @@
     }
     .start-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
     .start-actions .btn-lg { justify-content: center; }
-    .try {
-      background: none;
-      border: none;
-      font-family: var(--kr);
-      font-size: 15px;
-      color: var(--ink);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      cursor: pointer;
-    }
+    .try { font-size: 17px; padding: 16px 20px; text-align: center; }
     .resume {
       display: flex;
       justify-content: center;
@@ -330,7 +321,7 @@
       <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>내 컴퓨터와 드라이브 속 놓친 문서까지 찾아<br>참고할 부분을 보여드려요.</p>
       <div class="start-actions">
         <a class="btn btn-lg" href="upload.html">시작하기 →</a>
-        <button type="button" class="try" data-sample>문서 없이 예시로 먼저 해 보기</button>
+        <button type="button" class="btn btn-ghost try" data-sample>예시로 해 보기</button>
         <div class="resume" id="resume" hidden>
           <a href="reader.html" id="resume-link">이어서 하기</a>
           <button type="button" id="fresh">처음부터 새로</button>

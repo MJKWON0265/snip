@@ -200,39 +200,8 @@ a.stp:hover { background: #f3f3f0; }
   text-overflow: ellipsis;
 }
 
-/* "snip은 이렇게 써요" 설명: 읽을 문서 1개 + 참고할 문서 여러 개 → 관련 부분 */
-.how {
-  border: 1px solid var(--line);
-  background: var(--panel);
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.how-flow {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  align-items: stretch;
-  gap: 10px;
-}
-.how-card {
-  border: 1.5px solid var(--line);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  word-break: keep-all;
-}
-.how-card.on { border-color: var(--orange); background: var(--orange-soft); }
-.how-card b { font-size: 16px; }
-.how-card span:last-child { font-size: 14px; color: var(--muted); line-height: 1.5; }
-.how-num { font-family: var(--mono); font-size: 12px; color: var(--orange-ink); }
-.how-arrow { align-self: center; font-family: var(--mono); font-size: 22px; color: var(--muted); }
-.how-examples { width: 100%; border-collapse: collapse; font-size: 14px; word-break: keep-all; }
-.how-examples th, .how-examples td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
-.how-examples thead th { border-top: none; font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 500; }
-.how-examples tbody th { white-space: nowrap; font-weight: 700; }
-.how-try { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
+/* "예시로 해 보기" 줄 */
+.how-try { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
 .how-try .btn { padding: 12px 18px; font-size: 14px; }
 
 @media (max-width: 900px) {
@@ -244,7 +213,5 @@ a.stp:hover { background: #f3f3f0; }
   .stp-text small { display: none; }
   .stp-text b { font-size: 13px; }
   .stp-num { width: 26px; height: 26px; font-size: 13px; }
-  .how-flow { grid-template-columns: 1fr; }
-  .how-arrow { justify-self: center; line-height: 1; }
   .how-try .btn { width: 100%; text-align: center; }
 }
