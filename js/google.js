@@ -111,8 +111,9 @@
     return s;
   }
 
-  // 구글에 요청을 보내요. 실패하면 구글이 알려준 이유(reason)를 오류에 담아 돌려줘요.
-  async function google(urlText, params) {
+  // 구글에 요청을 보내요. (이름을 google로 지으면 구글 로그인 도구 window.google을 가려서 로그인이 깨져요)
+  // 실패하면 구글이 알려준 이유(reason)를 오류에 담아 돌려줘요.
+  async function callGoogle(urlText, params) {
     const s = getSession();
     if (!s) throw new Error('로그인이 만료되었어요. 페이지를 새로고침한 뒤 다시 로그인해 주세요.');
     const url = new URL(urlText);
@@ -135,7 +136,7 @@
   }
 
   function drive(path, params) {
-    return google('https://www.googleapis.com/drive/v3/' + path, params);
+    return callGoogle('https://www.googleapis.com/drive/v3/' + path, params);
   }
 
   function escapeQuery(text) {
@@ -234,11 +235,11 @@
   // (예: 주인이 "보기 권한자는 다운로드 못 함"으로 막아 둔 문서)
   async function readByApi(file) {
     if (file.mimeType === 'application/vnd.google-apps.presentation') {
-      const res = await google('https://slides.googleapis.com/v1/presentations/' + encodeURIComponent(file.id), { fields: 'slides(pageElements)' });
+      const res = await callGoogle('https://slides.googleapis.com/v1/presentations/' + encodeURIComponent(file.id), { fields: 'slides(pageElements)' });
       const data = await res.json();
       return (data.slides || []).flatMap((slide) => toParagraphs(collectText(slide.pageElements || [], []).join('')));
     }
-    const res = await google('https://docs.googleapis.com/v1/documents/' + encodeURIComponent(file.id), { fields: 'body(content)' });
+    const res = await callGoogle('https://docs.googleapis.com/v1/documents/' + encodeURIComponent(file.id), { fields: 'body(content)' });
     return toParagraphs(collectText((await res.json()).body || {}, []).join(''));
   }
 
