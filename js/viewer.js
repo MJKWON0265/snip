@@ -27,7 +27,10 @@
   }
 
   // 쪽 넘기기 버튼 묶음을 만들어요. go(n)을 부르면 n쪽(1부터)을 그려요.
-  function makePager(nav, total, go) {
+  // opts.start: 처음 보여줄 쪽 · opts.onShow(n): 쪽을 다 그린 뒤 부를 함수
+  // 돌려주는 것: { total, show(n), current() } — 다른 화면에서 원하는 쪽으로 넘길 때 써요.
+  async function makePager(nav, total, go, opts) {
+    opts = opts || {};
     nav.innerHTML = '';
     nav.hidden = false;
     const prev = el('button', 'pg-btn', '◀ 이전');
@@ -41,7 +44,8 @@
       info.textContent = current + ' / ' + total;
       prev.disabled = current === 1;
       next.disabled = current === total;
-      await go(current);
+      const drawn = await go(current);
+      if (drawn !== false && opts.onShow) opts.onShow(current);
     }
     prev.addEventListener('click', () => show(current - 1));
     next.addEventListener('click', () => show(current + 1));
@@ -54,13 +58,14 @@
     let timer = null;
     window.addEventListener('resize', () => {
       clearTimeout(timer);
-      timer = setTimeout(() => go(current), 250);
+      timer = setTimeout(() => show(current), 250);
     });
-    return show(1);
+    await show(opts.start || 1);
+    return { total, show, current: () => current };
   }
 
   // ---------- PDF ----------
-  async function renderPdf(file, body, nav) {
+  async function renderPdf(file, body, nav, opts) {
     await loadScript('vendor/pdf.min.js');
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
     const pdf = await pdfjsLib.getDocument({
@@ -102,15 +107,22 @@
         viewport,
         textDivs: [],
       }).promise;
-      if (ticket !== drawing) return; // 그리는 사이 다른 쪽으로 넘겼으면 버려요.
+      if (ticket !== drawing) return false; // 그리는 사이 다른 쪽으로 넘겼으면 버려요.
       body.innerHTML = '';
       body.appendChild(wrap);
+      return true;
     }
-    return makePager(nav, pdf.numPages, go);
+    // 쪽마다 글자를 꺼내 둬요. (원본 보기에서 관련 부분이 몇 쪽에 있는지 찾을 때 써요)
+    async function pageText(n) {
+      const content = await (await pdf.getPage(n)).getTextContent();
+      return content.items.map((it) => it.str || '').join('');
+    }
+    const pager = await makePager(nav, pdf.numPages, go, opts);
+    return Object.assign(pager, { pageText });
   }
 
   // ---------- 워드(.docx) ----------
-  async function renderDocx(file, body) {
+  async function renderDocx(file, body, nav, opts) {
     await loadScript('vendor/mammoth.browser.min.js');
     const result = await mammoth.convertToHtml(
       { arrayBuffer: await file.arrayBuffer() },
@@ -121,6 +133,9 @@
     paper.querySelectorAll('script').forEach((s) => s.remove());
     body.innerHTML = '';
     body.appendChild(paper);
+    // 워드는 한 장으로 길게 보여줘서 쪽 넘기기가 없어요.
+    const show = async () => { if (opts && opts.onShow) opts.onShow(1); };
+    return { total: 1, show, current: () => 1, pageText: async () => paper.textContent };
   }
 
   // ---------- 파워포인트(.pptx) ----------
@@ -146,7 +161,7 @@
     return parts.join('/');
   }
 
-  async function renderPptx(file, body, nav) {
+  async function renderPptx(file, body, nav, opts) {
     await loadScript('vendor/jszip.min.js');
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const xmlCache = {};
@@ -422,7 +437,7 @@
     async function go(n) {
       const ticket = ++drawing;
       const stage = await drawSlide(slidePaths[n - 1]);
-      if (ticket !== drawing) return;
+      if (ticket !== drawing) return false;
       // 슬라이드를 원래 크기로 그린 뒤, 읽기 칸 폭에 맞게 줄이거나 늘려요.
       const scale = Math.max(280, body.clientWidth) / W;
       const frame = el('div', 'pp-frame');
@@ -432,18 +447,109 @@
       frame.appendChild(stage);
       body.innerHTML = '';
       body.appendChild(frame);
+      return true;
     }
-    return makePager(nav, slidePaths.length, go);
+    // 슬라이드마다 글자를 꺼내요. (원본 보기에서 관련 부분이 몇 번째 슬라이드에 있는지 찾을 때 써요)
+    async function pageText(n) {
+      const slide = await xml(slidePaths[n - 1]);
+      return slide ? Array.from(slide.getElementsByTagName('a:t')).map((t) => t.textContent).join('') : '';
+    }
+    const pager = await makePager(nav, slidePaths.length, go, opts);
+    return Object.assign(pager, { pageText });
   }
 
-  // 파일 종류에 맞는 뷰어로 그려요. 원래 모양으로 못 그리는 종류면 false를 돌려줘요.
-  async function render(file, body, nav) {
+  // 파일 종류에 맞는 뷰어로 그려요. 원래 모양으로 못 그리는 종류면 null을 돌려줘요.
+  // 그리면 { total, show(n), current(), pageText(n) }를 돌려줘요.
+  async function render(file, body, nav, opts) {
     const ext = file.name.split('.').pop().toLowerCase();
-    if (ext === 'pdf') { await renderPdf(file, body, nav); return true; }
-    if (ext === 'pptx') { await renderPptx(file, body, nav); return true; }
-    if (ext === 'docx') { await renderDocx(file, body); return true; }
-    return false;
+    if (ext === 'pdf') return renderPdf(file, body, nav, opts);
+    if (ext === 'pptx') return renderPptx(file, body, nav, opts);
+    if (ext === 'docx') return renderDocx(file, body, nav, opts);
+    return null;
   }
 
-  window.SnipViewer = { render };
+  // ---------- 찾은 부분 형광펜 (Ctrl+F처럼) ----------
+  // 띄어쓰기·줄바꿈·문장부호가 원본과 조금 달라도 찾을 수 있게, 글자와 숫자만 남겨서 비교해요.
+  const WORD = /[\p{L}\p{N}]/u;
+  function squash(text) {
+    let out = '';
+    for (const ch of text) if (WORD.test(ch)) out += ch.toLowerCase();
+    return out;
+  }
+
+  // 쪽 글자(page) 안에서 찾을 글(target)이 있는 자리를 [시작, 끝]으로 알려줘요. 둘 다 squash한 글이에요.
+  // 통째로 없으면 조각조각 나눠 찾고, 찾은 조각 수를 점수로 줘요. (점수가 높은 쪽이 그 쪽이에요)
+  function locate(page, target) {
+    if (target.length < 4 || !page) return null;
+    const whole = page.indexOf(target);
+    if (whole >= 0) return { start: whole, end: whole + target.length, score: 1000 };
+    const k = Math.min(16, Math.max(6, Math.floor(target.length / 5)));
+    let from = 0;
+    let first = -1;
+    let last = -1;
+    let score = 0;
+    for (let j = 0; j + k <= target.length; j += k) {
+      const at = page.indexOf(target.slice(j, j + k), from);
+      if (at < 0) continue;
+      if (first < 0) first = at;
+      last = at + k;
+      from = last;
+      score++;
+    }
+    if (!score) return null;
+    return { start: first, end: last, score };
+  }
+
+  // 보이는 쪽에서 target 글을 찾아 형광펜(CSS Highlight)으로 칠하고, 칠한 첫 부분을 돌려줘요.
+  function mark(body, target, name) {
+    name = name || 'snip-hit';
+    const wanted = squash(target || '');
+    const nodes = [];
+    let all = '';
+    const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const raw = n.nodeValue;
+      const pos = []; // squash한 글자 하나하나가 원래 글의 몇 번째 글자인지
+      let i = 0;
+      for (const ch of raw) {
+        if (WORD.test(ch)) { all += ch.toLowerCase(); pos.push(i); }
+        i += ch.length;
+      }
+      if (pos.length) nodes.push({ node: n, from: all.length - pos.length, pos });
+    }
+    const spot = locate(all, wanted);
+    if (!spot) {
+      try { CSS.highlights.delete(name); } catch (e) {}
+      return null;
+    }
+    const ranges = [];
+    nodes.forEach(({ node, from, pos }) => {
+      const a = Math.max(spot.start, from) - from;
+      const b = Math.min(spot.end, from + pos.length) - from;
+      if (a >= b) return;
+      const r = document.createRange();
+      r.setStart(node, pos[a]);
+      r.setEnd(node, pos[b - 1] + 1);
+      ranges.push(r);
+    });
+    try { if (window.CSS && CSS.highlights) CSS.highlights.set(name, new Highlight(...ranges)); } catch (e) {}
+    return ranges[0] || null;
+  }
+
+  // 여러 쪽 가운데 target이 들어 있을 것 같은 쪽 번호를 찾아요. 못 찾으면 0이에요.
+  async function findPage(viewer, target) {
+    const wanted = squash(target || '');
+    let best = 0;
+    let bestScore = 0;
+    for (let n = 1; n <= viewer.total; n++) {
+      let text = '';
+      try { text = await viewer.pageText(n); } catch (e) {}
+      const spot = locate(squash(text), wanted);
+      if (spot && spot.score > bestScore) { best = n; bestScore = spot.score; }
+      if (bestScore >= 1000) break;
+    }
+    return best;
+  }
+
+  window.SnipViewer = { render, mark, findPage };
 })();

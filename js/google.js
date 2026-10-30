@@ -269,8 +269,14 @@
 
   // 문서들을 하나씩 읽어 오며 진행 상황을 알려줘요.
   // source.folderId가 있으면 그 폴더의 문서를, source.files가 있으면 고른 문서들을 읽어요.
+  // 이미 참고 문서함에 있는 문서는 다시 읽지 않고, 남은 자리(문서 수·글자 수)만큼만 읽어요.
+  // 읽은 결과는 저장하지 않고 돌려줘요. (addToLibrary로 참고 문서함에 더해요)
   async function buildLibrary(source, onProgress) {
-    const files = source.files ? source.files.slice(0, MAX_DOCS) : await listDocs(source.folderId);
+    const current = getLibrary();
+    const have = new Set(current && current.docs && !current.sample ? current.docs.map((d) => d.id) : []);
+    const room = libraryRoom();
+    const listed = source.files ? source.files : await listDocs(source.folderId);
+    const files = listed.filter((f) => !have.has(f.id));
     const docs = [];
     const problems = {}; // 못 읽은 이유별 개수
     let total = 0;
@@ -278,17 +284,18 @@
     const note = (why) => { problems[why] = (problems[why] || 0) + 1; skipped++; };
     for (let i = 0; i < files.length; i++) {
       onProgress && onProgress(i, files.length, files[i].name);
+      if (docs.length >= room.docs) { note('over-limit'); continue; }
       const got = await readFileText(files[i]);
       if (got.problem) { note(got.problem); continue; }
       const paragraphs = got.paragraphs;
       if (!paragraphs.length) { note('empty'); continue; }
       const size = paragraphs.join('\n').length;
-      if (total + size > MAX_TOTAL_CHARS) { note('over-limit'); continue; }
+      if (total + size > room.chars) { note('over-limit'); continue; }
       total += size;
-      docs.push({ id: files[i].id, name: files[i].name, link: files[i].webViewLink || '', paragraphs });
+      docs.push({ id: files[i].id, name: files[i].name, link: files[i].webViewLink || '', mimeType: files[i].mimeType || '', paragraphs });
     }
     onProgress && onProgress(files.length, files.length, '');
-    return saveLibrary({ source: source.label, docs, skipped, problems, at: Date.now() });
+    return { source: source.label, docs, skipped, problems, already: listed.length - files.length };
   }
 
   function getLibrary() {
@@ -296,6 +303,39 @@
   }
   function clearLibrary() {
     write(localStorage, LIBRARY_KEY, null);
+  }
+
+  // 참고 문서함에 더 넣을 수 있는 자리 (문서 수, 글자 수)
+  function libraryRoom() {
+    const lib = getLibrary();
+    const docs = lib && lib.docs && !lib.sample ? lib.docs : [];
+    const chars = docs.reduce((sum, d) => sum + d.paragraphs.join('\n').length, 0);
+    return { docs: Math.max(0, MAX_DOCS - docs.length), chars: Math.max(0, MAX_TOTAL_CHARS - chars) };
+  }
+
+  // 새로 읽은 문서들을 지금 참고 문서함에 더해요. 이미 있던 문서는 그대로 두고, 같은 문서는 한 번만 넣어요.
+  function addToLibrary(added) {
+    let lib = getLibrary() || { docs: [] };
+    if (lib.sample || !lib.docs) lib = { docs: [] }; // 예시 문서는 내 문서를 담는 순간 빼요.
+    const have = new Set(lib.docs.map((d) => d.id));
+    const docs = lib.docs.concat(added.docs.filter((d) => !have.has(d.id)));
+    return saveLibrary({ docs, at: Date.now() });
+  }
+
+  // 참고 문서함에서 문서 하나를 빼요.
+  function removeFromLibrary(id) {
+    const lib = getLibrary();
+    if (!lib || !lib.docs) return null;
+    const docs = lib.docs.filter((d) => d.id !== id);
+    if (!docs.length) { clearLibrary(); return null; }
+    return saveLibrary({ docs, sample: lib.sample, at: Date.now() });
+  }
+
+  // 원본 보기용: 구글 문서·프레젠테이션을 PDF로 받아요. 원래 모양 그대로 그리고 관련 부분을 칠하려고 써요.
+  async function downloadPdf(doc) {
+    const res = await drive('files/' + encodeURIComponent(doc.id) + '/export', { mimeType: 'application/pdf' });
+    const blob = await res.blob();
+    return new File([blob], doc.name.replace(/\.pdf$/i, '') + '.pdf', { type: 'application/pdf' });
   }
 
   window.SnipGoogle = {
@@ -314,5 +354,9 @@
     saveLibrary,
     getLibrary,
     clearLibrary,
+    libraryRoom,
+    addToLibrary,
+    removeFromLibrary,
+    downloadPdf,
   };
 })();
