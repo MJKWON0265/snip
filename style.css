@@ -200,10 +200,6 @@ a.stp:hover { background: #f3f3f0; }
   text-overflow: ellipsis;
 }
 
-/* "예시로 해 보기" 줄 */
-.how-try { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 15px; color: var(--muted); }
-.how-try .btn { padding: 12px 18px; font-size: 14px; }
-
 @media (max-width: 900px) {
   header { padding: 16px; }
   .frame { margin: 0 16px; }
@@ -213,5 +209,4 @@ a.stp:hover { background: #f3f3f0; }
   .stp-text small { display: none; }
   .stp-text b { font-size: 13px; }
   .stp-num { width: 26px; height: 26px; font-size: 13px; }
-  .how-try .btn { width: 100%; text-align: center; }
 }

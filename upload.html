@@ -106,11 +106,6 @@
       <h1 class="page-title">먼저, 지금 읽을 문서를 넣어 주세요</h1>
       <p class="page-sub">이 문서를 읽다가 궁금한 문장을 드래그하게 돼요. 받은 피드백, 읽고 있는 논문처럼 지금 읽어야 하는 문서 <b>하나</b>면 돼요.</p>
 
-      <!-- 처음이라 잘 모르겠으면 예시 문서로 먼저 해 볼 수 있어요 -->
-      <div class="how-try box">
-        <span>처음이라 잘 모르겠다면? 예시 문서로 먼저 해 볼 수 있어요.</span>
-        <button type="button" class="btn btn-ghost" data-sample>예시로 해 보기 →</button>
-      </div>
 
       <div class="current" id="current" hidden>
         <div><small>지금 읽는 문서</small><b id="current-name"></b></div>
@@ -149,7 +144,6 @@
   <script src="js/steps.js"></script>
   <script>
     SnipWork.renderSteps(document.getElementById('steps'), 1);
-    document.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', () => SnipWork.startSample()));
 
     // 이미 넣어 둔 문서가 있으면 보여줘요. 그대로 다음 단계로 가거나, 아래에서 다른 문서로 바꿀 수 있어요.
     const currentDoc = SnipWork.getDoc();
