@@ -50,7 +50,7 @@
   transform-origin: 0% 0%;
 }
 .textLayer span.markedContent { top: 0; height: 0; }
-.textLayer ::selection { background: rgba(255, 107, 26, 0.35); }
+.textLayer ::selection { background: rgba(79, 70, 229, 0.25); }
 .textLayer br::selection { background: transparent; }
 .textLayer .endOfContent {
   display: block;
@@ -118,7 +118,7 @@
 .docx-page img { max-width: 100%; height: auto; }
 
 /* 고른 문장 형광펜 (원래 모양 보기에서 쓰는 방법) */
-::highlight(snip-pick) { background-color: rgba(255, 107, 26, 0.35); }
+::highlight(snip-pick) { background-color: rgba(79, 70, 229, 0.25); }
 /* 원본 보기에서 관련 부분을 칠하는 형광펜 (Ctrl+F 검색 결과처럼) */
 ::highlight(snip-hit) { background-color: rgba(255, 196, 0, 0.55); }
 
