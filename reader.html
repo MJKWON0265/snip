@@ -96,9 +96,13 @@
     .note.error { color: #b3261e; }
     .cards, #examples { display: flex; flex-direction: column; gap: 16px; }
 
-    /* 오른쪽 결과 칸 */
-    .results {
-      background: #f3f3f0;
+    /* 오른쪽 결과 칸: 문서를 아래로 읽어 내려가도 화면 옆에 붙어서 따라와요 */
+    .results { background: #f3f3f0; }
+    .results-in {
+      position: sticky;
+      top: 0;
+      max-height: 100vh;
+      overflow-y: auto;
       padding: 32px;
       display: flex;
       flex-direction: column;
@@ -134,7 +138,7 @@
     @media (max-width: 900px) {
       .split { grid-template-columns: 1fr; }
       .doc { padding: 32px 20px; border-right: none; border-bottom: 1px solid var(--line); }
-      .results { padding: 24px 20px; }
+      .results-in { position: static; max-height: none; overflow: visible; padding: 24px 20px; }
     }
   </style>
 </head>
@@ -164,6 +168,7 @@
       </article>
 
       <aside class="results" id="results">
+        <div class="results-in" id="results-in">
         <div class="refs">
           <span id="ref-name">아직 참고 문서를 고르지 않았어요</span>
           <a href="folder.html?from=reader" id="ref-add">+ 참고 문서 더 넣기</a>
@@ -201,6 +206,7 @@
             <a class="open" href="original.html" target="_blank">원본에서 이 부분 보기 ↗</a>
           </div>
           </div>
+        </div>
         </div>
       </aside>
 
@@ -308,6 +314,7 @@
       document.getElementById('empty').hidden = true;
       document.getElementById('found').hidden = false;
       if (window.innerWidth <= 900) document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      else document.getElementById('results-in').scrollTop = 0;
       askAI(picked.text);
     });
 
