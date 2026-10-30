@@ -104,12 +104,12 @@
     <div class="page">
       <nav id="steps"></nav>
       <h1 class="page-title">먼저, 지금 읽을 문서를 넣어 주세요</h1>
-      <p class="page-sub">이 문서를 읽다가 궁금한 문장을 드래그하게 돼요. 받은 피드백, 읽고 있는 논문처럼 지금 읽어야 하는 문서 <b>하나</b>면 돼요.</p>
+      <p class="page-sub">이 문서를 읽다가 궁금한 문장을 드래그하게 돼요. 받은 피드백, 읽고 있는 논문처럼 지금 읽어야 하는 문서 <b>하나</b>면 돼요. 참고할 문서는 문서를 연 뒤 옆에서 넣어요.</p>
 
 
       <div class="current" id="current" hidden>
         <div><small>지금 읽는 문서</small><b id="current-name"></b></div>
-        <a class="btn" href="folder.html" id="keep">이 문서 그대로 다음으로 →</a>
+        <a class="btn" href="reader.html" id="keep">이 문서 그대로 열기 →</a>
       </div>
 
       <div class="tabs">
@@ -133,7 +133,7 @@
 
       <div class="actions">
         <a class="btn btn-ghost" href="index.html">← 처음으로</a>
-        <a class="btn" href="folder.html" id="open">다음: 참고할 문서 고르기 →</a>
+        <a class="btn" href="reader.html" id="open">다음: 문서 열기 →</a>
       </div>
     </div>
   </main>
@@ -183,7 +183,7 @@
           e.preventDefault();
           SnipWork.setDoc(fileDoc);
           try { await SnipFiles.saveReading(fileRaw); } catch (err) {}
-          location.href = 'folder.html';
+          location.href = 'reader.html';
         } else if (pasteOn && value) {
           const firstLine = value.split('\n')[0].trim();
           const title = firstLine.length > 30 ? firstLine.slice(0, 30) + '…' : firstLine;

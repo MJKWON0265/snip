@@ -47,6 +47,124 @@
     .doc-body ::selection { background: var(--accent-soft); }
     [hidden] { display: none !important; }
 
+    /* 참고 문서가 아직 없을 때 오른쪽에 보이는 안내 + 버튼 */
+    .need-refs {
+      border: 1.5px solid var(--accent);
+      background: #fff;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      word-break: keep-all;
+    }
+    .need-refs b { font-size: 20px; }
+    .need-refs span { font-size: 16px; color: var(--muted); line-height: 1.65; }
+    .need-refs .btn { align-self: flex-start; margin-top: 6px; }
+
+    /* 카드 아래 줄: 참고할래요 체크 + 원본 보기 */
+    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .pick {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border: 1.5px solid var(--ink);
+      background: #fff;
+      font-family: var(--kr);
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .pick .box {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid var(--ink);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      color: transparent;
+    }
+    .pick.on { border-color: var(--accent); background: var(--accent-soft); }
+    .pick.on .box { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .card.picked-card { box-shadow: inset 4px 0 0 var(--accent); }
+
+    /* 체크한 참고 내용이 있으면 결과 칸 위에 보이는 줄 */
+    .picks-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--ink);
+      color: #fff;
+      padding: 12px 14px;
+      font-size: 15px;
+    }
+    .picks-bar span { flex: 1; min-width: 140px; }
+    .picks-bar button {
+      border: 1.5px solid #fff;
+      background: transparent;
+      color: #fff;
+      font-family: var(--kr);
+      font-size: 14px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .picks-bar button.main { background: #fff; color: var(--ink); }
+
+    /* 참고 노트 미리보기 */
+    .note-doc { flex: 1; min-height: 0; overflow-y: auto; padding: 32px 40px; background: #fff; word-break: keep-all; }
+    .note-doc h1 { font-size: 24px; margin-bottom: 6px; }
+    .note-doc .meta-line { font-size: 14px; color: var(--muted); margin-bottom: 18px; }
+    .note-doc .summary { background: var(--accent-soft); padding: 14px 16px; font-size: 15px; line-height: 1.7; margin-bottom: 24px; }
+    .note-doc h2 { font-size: 17px; margin: 26px 0 12px; padding-left: 10px; border-left: 4px solid var(--accent); line-height: 1.5; }
+    .note-item { border: 1px solid var(--line); padding: 14px 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.65; }
+    .note-item .file { font-family: var(--mono); font-size: 13px; color: var(--accent-ink); display: flex; justify-content: space-between; gap: 8px; }
+    .note-item .file button { border: none; background: none; color: var(--muted); cursor: pointer; font-size: 13px; text-decoration: underline; }
+    .note-item q { background: var(--bg); padding: 8px 10px; quotes: none; }
+    .note-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--line); background: #fff; flex-wrap: wrap; }
+    .note-actions .btn { padding: 12px 18px; font-size: 14px; }
+
+    /* 참고 문서 고르기 팝업 */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(22, 22, 22, 0.45);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .modal-box {
+      position: relative;
+      width: min(980px, 100%);
+      height: min(860px, calc(100vh - 48px));
+      background: var(--bg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      font-weight: 700;
+    }
+    .modal-head button {
+      border: none;
+      background: none;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--ink);
+    }
+    .modal iframe { flex: 1; width: 100%; border: none; }
+    @media (max-width: 700px) {
+      .modal { padding: 0; }
+      .modal-box { width: 100%; height: 100vh; height: 100dvh; }
+    }
+
     /* 맨 위 단계 표시 줄 */
     .steps-bar { padding: 16px 24px; border-bottom: 1px solid var(--line); }
     /* 예시로 해 보는 중이라는 안내 */
@@ -171,7 +289,17 @@
         <div class="results-in" id="results-in">
         <div class="refs">
           <span id="ref-name">아직 참고 문서를 고르지 않았어요</span>
-          <a href="folder.html?from=reader" id="ref-add">+ 참고 문서 더 넣기</a>
+          <a href="folder.html?from=reader" id="ref-add" data-open-refs>+ 참고 문서 더 넣기</a>
+        </div>
+        <div class="picks-bar" id="picks-bar" hidden>
+          <span id="picks-count">참고할 것 0개</span>
+          <button type="button" id="picks-view">모아 보기</button>
+          <button type="button" class="main" id="picks-save">문서로 저장</button>
+        </div>
+        <div class="need-refs" id="need-refs" hidden>
+          <b>찾아볼 참고 문서를 넣어 주세요</b>
+          <span>왼쪽 문서를 읽다가 궁금한 문장을 드래그하면, 여기 넣은 문서들 속에서 관련 부분을 찾아 모아 드려요. 예전 기획서, 모아 둔 논문, 수업 자료처럼 참고하고 싶은 문서를 넣어 주세요.</span>
+          <button type="button" class="btn" data-open-refs>+ 참고 문서 넣기</button>
         </div>
         <div class="empty" id="empty">
           <b>왼쪽 문서에서 궁금한 문장을 드래그해 보세요</b>
@@ -213,13 +341,39 @@
     </div>
   </main>
 
+  <!-- 참고 문서 고르기 팝업: 읽던 화면을 그대로 두고 그 위에서 골라요 -->
+  <div class="modal" id="ref-modal" hidden role="dialog" aria-modal="true" aria-label="참고 문서 넣기">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>참고 문서 넣기</span>
+        <button type="button" id="ref-close" aria-label="닫기">×</button>
+      </div>
+      <iframe id="ref-frame" title="참고 문서 고르기"></iframe>
+    </div>
+  </div>
+
+  <!-- 참고 노트: 체크한 참고 내용을 문서로 정리해서 보여주고 저장해요 -->
+  <div class="modal" id="note-modal" hidden role="dialog" aria-modal="true" aria-label="참고 노트">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>참고 노트 미리보기</span>
+        <button type="button" id="note-close" aria-label="닫기">×</button>
+      </div>
+      <div class="note-doc" id="note-doc"></div>
+      <div class="note-actions">
+        <button type="button" class="btn btn-ghost" id="note-copy">글자로 복사</button>
+        <button type="button" class="btn" id="note-word">워드 파일로 저장</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/google.js"></script>
   <script src="js/files.js"></script>
   <script src="js/viewer.js"></script>
   <script src="js/steps.js"></script>
   <script>
-    SnipWork.renderSteps(document.getElementById('steps'), 3);
+    SnipWork.renderSteps(document.getElementById('steps'), 2);
 
     // 1) 문서 넣기 화면에서 넣은 글이 있으면 그걸 보여줘요. 없으면 예시 문서를 그대로 둬요.
     const saved = SnipWork.getDoc();
@@ -312,6 +466,7 @@
 
       document.getElementById('picked').textContent = '“' + picked.text + '”';
       document.getElementById('empty').hidden = true;
+      document.getElementById('need-refs').hidden = true;
       document.getElementById('found').hidden = false;
       if (window.innerWidth <= 900) document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
       else document.getElementById('results-in').scrollTop = 0;
@@ -323,16 +478,47 @@
     const cardsEl = document.getElementById('cards');
     const examplesEl = document.getElementById('examples');
 
-    // 결과 칸 맨 위에 지금 쓰는 참고 문서를 보여줘요. 읽던 그대로 더 넣을 수 있어요.
-    (function () {
+    // 결과 칸 맨 위에 지금 쓰는 참고 문서를 보여줘요. 아직 없으면 넣으라는 안내를 크게 보여줘요.
+    function showRefs() {
       const lib = SnipGoogle.getLibrary();
-      if (lib && lib.docs && lib.docs.length) {
+      const has = Boolean(lib && lib.docs && lib.docs.length);
+      if (has) {
         const names = lib.docs.slice(0, 2).map((d) => d.name).join(', ');
         document.getElementById('ref-name').textContent = '참고 문서 ' + lib.docs.length + '개' + (lib.sample ? ' (예시)' : '') + ' · ' + names + (lib.docs.length > 2 ? ' 외' : '');
       } else {
-        document.getElementById('ref-add').textContent = '+ 참고 문서 고르기';
+        document.getElementById('ref-name').textContent = '아직 참고 문서가 없어요';
       }
-    })();
+      document.getElementById('ref-add').textContent = has ? '+ 참고 문서 더 넣기' : '+ 참고 문서 넣기';
+      const found = !document.getElementById('found').hidden;
+      document.getElementById('need-refs').hidden = has || found;
+      document.getElementById('empty').hidden = !has || found;
+      SnipWork.renderSteps(document.getElementById('steps'), 2);
+    }
+    showRefs();
+
+    // 참고 문서는 팝업에서 골라요. 읽던 문서·보던 쪽은 뒤에 그대로 있어요.
+    const modal = document.getElementById('ref-modal');
+    const frame = document.getElementById('ref-frame');
+    function openRefs(e) {
+      if (e) e.preventDefault();
+      frame.src = 'folder.html?embed=1';
+      modal.hidden = false;
+    }
+    function closeRefs() {
+      modal.hidden = true;
+      frame.src = 'about:blank';
+      showRefs();
+    }
+    document.addEventListener('click', (e) => {
+      const opener = e.target.closest('[data-open-refs]');
+      if (opener) openRefs(e);
+    });
+    document.getElementById('ref-close').addEventListener('click', closeRefs);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeRefs(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeRefs(); });
+    window.addEventListener('message', (e) => {
+      if (e.origin === location.origin && e.data && e.data.type === 'snip-refs-done') closeRefs();
+    });
 
     // 2단계에서 고른 참고 문서를 함께 보내요.
     function libraryForAI() {
@@ -348,8 +534,9 @@
         statusEl.innerHTML = '';
         const link = document.createElement('a');
         link.href = 'folder.html?from=reader';
-        link.textContent = '참고할 문서 고르기 →';
-        statusEl.append('아직 참고할 문서를 고르지 않았어요. ', link);
+        link.dataset.openRefs = '';
+        link.textContent = '참고 문서 넣기 →';
+        statusEl.append('아직 참고 문서를 넣지 않았어요. ', link);
         cardsEl.innerHTML = '';
         examplesEl.hidden = true;
         return;
@@ -385,7 +572,7 @@
           return;
         }
         statusEl.textContent = '관련 부분 ' + data.results.length + '곳을 찾았어요.';
-        data.results.forEach((r) => cardsEl.appendChild(makeCard(r)));
+        data.results.forEach((r) => cardsEl.appendChild(makeCard(r, sentence)));
         // 참고 문서를 더 넣으러 갔다 와도 방금 찾은 결과가 남아 있게 보관해요.
         try { sessionStorage.setItem('snip-results', JSON.stringify({ sentence, results: data.results })); } catch (e) {}
       } catch (e) {
@@ -397,7 +584,7 @@
       }
     }
 
-    function makeCard(r) {
+    function makeCard(r, sentence) {
       const card = document.createElement('div');
       card.className = 'card';
       const add = (tag, cls, text) => {
@@ -416,15 +603,205 @@
       tip.append(b, document.createElement('br'), r.tip);
       // 원본은 새 탭으로 열어서, 읽던 문서가 이 탭에 그대로 남아 있게 해요.
       // 고른 카드는 localStorage에 넣어 전해줘요. window.open으로 열면 구글 로그인도 새 탭에 이어져요.
-      const link = add('a', 'open', '원본에서 이 부분 보기 ↗ (새 탭)');
+      const foot = add('div', 'card-foot', '');
+      // 마음에 드는 제안은 체크해서 모아 둬요. 나중에 참고 노트로 정리해서 저장할 수 있어요.
+      const pick = document.createElement('button');
+      pick.type = 'button';
+      pick.className = 'pick';
+      const box = document.createElement('span');
+      box.className = 'box';
+      box.textContent = '✓';
+      const label = document.createElement('span');
+      pick.append(box, label);
+      const key = SnipPicks.keyOf(r, sentence);
+      function paint() {
+        const on = SnipPicks.has(key);
+        pick.classList.toggle('on', on);
+        card.classList.toggle('picked-card', on);
+        pick.setAttribute('aria-pressed', on ? 'true' : 'false');
+        label.textContent = on ? '참고할 것에 담았어요' : '이거 참고할래요';
+      }
+      pick.addEventListener('click', () => {
+        SnipPicks.toggle(r, sentence);
+        paint();
+        showPicks();
+      });
+      paint();
+      card.addEventListener('repaint', paint);
+      const link = document.createElement('a');
+      link.className = 'open';
+      link.textContent = '원본에서 이 부분 보기 ↗ (새 탭)';
       link.href = 'original.html';
       link.target = '_blank';
       link.addEventListener('click', (e) => {
         try { localStorage.setItem('snip-hit', JSON.stringify(r)); } catch (err) {}
         if (window.open('original.html', '_blank')) e.preventDefault();
       });
+      foot.append(pick, link);
       return card;
     }
+
+    // ---------- 참고할 것 모아 두기 + 참고 노트 ----------
+    const SnipPicks = (function () {
+      const KEY = 'snip-picks';
+      function all() {
+        try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
+      }
+      function save(list) {
+        try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+      }
+      const keyOf = (r, sentence) => sentence + '|' + r.file + '|' + r.excerpt;
+      return {
+        all,
+        keyOf,
+        has: (key) => all().some((p) => p.key === key),
+        toggle(r, sentence) {
+          const key = keyOf(r, sentence);
+          const list = all();
+          const i = list.findIndex((p) => p.key === key);
+          if (i >= 0) list.splice(i, 1);
+          else list.push({ key, sentence, file: r.file, excerpt: r.excerpt, why: r.why, tip: r.tip, link: r.link || '', at: Date.now() });
+          save(list);
+        },
+        remove(key) { save(all().filter((p) => p.key !== key)); },
+      };
+    })();
+
+    function showPicks() {
+      const n = SnipPicks.all().length;
+      document.getElementById('picks-bar').hidden = !n;
+      document.getElementById('picks-count').textContent = '참고할 것 ' + n + '개 모았어요';
+    }
+
+    // 체크한 것들을 드래그한 문장별로 묶어서 참고 노트를 만들어요.
+    function buildNote() {
+      const picks = SnipPicks.all();
+      const title = document.getElementById('doc-title').textContent.trim();
+      const groups = new Map();
+      picks.forEach((p) => {
+        if (!groups.has(p.sentence)) groups.set(p.sentence, []);
+        groups.get(p.sentence).push(p);
+      });
+      const files = Array.from(new Set(picks.map((p) => p.file)));
+      const today = new Date().toLocaleDateString('ko-KR');
+      return {
+        title: title + ' · 참고 노트',
+        date: today,
+        summary: '"' + title + '"을(를) 읽으며 궁금했던 문장 ' + groups.size + '개에 대해, 참고할 내용 ' + picks.length + '개를 모았어요. '
+          + '참고한 문서: ' + files.join(', ') + '.',
+        groups: Array.from(groups.entries()),
+      };
+    }
+
+    function renderNote() {
+      const note = buildNote();
+      const el = document.getElementById('note-doc');
+      el.innerHTML = '';
+      const h1 = document.createElement('h1');
+      h1.textContent = note.title;
+      const meta = document.createElement('div');
+      meta.className = 'meta-line';
+      meta.textContent = note.date + ' · snip으로 정리';
+      const sum = document.createElement('div');
+      sum.className = 'summary';
+      sum.textContent = note.summary;
+      el.append(h1, meta, sum);
+      note.groups.forEach(([sentence, items]) => {
+        const h2 = document.createElement('h2');
+        h2.textContent = '“' + sentence + '”';
+        el.appendChild(h2);
+        items.forEach((p) => {
+          const item = document.createElement('div');
+          item.className = 'note-item';
+          const file = document.createElement('div');
+          file.className = 'file';
+          const name = document.createElement('span');
+          name.textContent = p.file;
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.textContent = '빼기';
+          del.addEventListener('click', () => {
+            SnipPicks.remove(p.key);
+            showPicks();
+            document.querySelectorAll('#cards .card').forEach((c) => c.dispatchEvent(new Event('repaint')));
+            if (!SnipPicks.all().length) closeNote();
+            else renderNote();
+          });
+          file.append(name, del);
+          const q = document.createElement('q');
+          q.textContent = p.excerpt;
+          const why = document.createElement('div');
+          why.textContent = '왜 관련 있나요: ' + p.why;
+          const tip = document.createElement('div');
+          tip.textContent = '이렇게 참고해요: ' + p.tip;
+          item.append(file, q, why, tip);
+          el.appendChild(item);
+        });
+      });
+    }
+
+    // 글자로 복사할 때 쓰는 모양
+    function noteText() {
+      const note = buildNote();
+      const lines = [note.title, note.date, '', note.summary, ''];
+      note.groups.forEach(([sentence, items]) => {
+        lines.push('■ “' + sentence + '”');
+        items.forEach((p, i) => {
+          lines.push('  ' + (i + 1) + '. ' + p.file);
+          lines.push('     - 내용: ' + p.excerpt);
+          lines.push('     - 왜 관련 있나요: ' + p.why);
+          lines.push('     - 이렇게 참고해요: ' + p.tip);
+        });
+        lines.push('');
+      });
+      return lines.join('\n');
+    }
+
+    // 워드에서 열리는 파일(.doc)로 저장해요. 구글 문서에 올려도 열려요.
+    function saveWord() {
+      const note = buildNote();
+      const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      let body = '<h1>' + esc(note.title) + '</h1><p style="color:#555">' + esc(note.date) + ' · snip으로 정리</p>'
+        + '<p style="background:#eef0ff;padding:10px">' + esc(note.summary) + '</p>';
+      note.groups.forEach(([sentence, items]) => {
+        body += '<h2>“' + esc(sentence) + '”</h2>';
+        items.forEach((p) => {
+          body += '<h3>' + esc(p.file) + '</h3>'
+            + '<p style="background:#f5f5f2;padding:8px">' + esc(p.excerpt) + '</p>'
+            + '<p><b>왜 관련 있나요:</b> ' + esc(p.why) + '</p>'
+            + '<p><b>이렇게 참고해요:</b> ' + esc(p.tip) + '</p>';
+        });
+      });
+      const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>'
+        + esc(note.title) + '</title></head><body style="font-family:Malgun Gothic, sans-serif">' + body + '</body></html>';
+      const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = note.title.replace(/[\\/:*?"<>|]/g, '') + '.doc';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    const noteModal = document.getElementById('note-modal');
+    function openNote() { renderNote(); noteModal.hidden = false; }
+    function closeNote() { noteModal.hidden = true; }
+    document.getElementById('picks-view').addEventListener('click', openNote);
+    document.getElementById('picks-save').addEventListener('click', openNote);
+    document.getElementById('note-close').addEventListener('click', closeNote);
+    noteModal.addEventListener('click', (e) => { if (e.target === noteModal) closeNote(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !noteModal.hidden) closeNote(); });
+    document.getElementById('note-word').addEventListener('click', saveWord);
+    document.getElementById('note-copy').addEventListener('click', async (e) => {
+      try {
+        await navigator.clipboard.writeText(noteText());
+        e.target.textContent = '복사했어요 ✓';
+      } catch (err) {
+        e.target.textContent = '복사하지 못했어요';
+      }
+      setTimeout(() => { e.target.textContent = '글자로 복사'; }, 1800);
+    });
+    showPicks();
 
     // 5) 아까 찾은 결과가 있으면 다시 보여줘요. (참고 문서를 더 넣고 돌아왔을 때)
     (function () {
@@ -433,9 +810,10 @@
       if (!last || !last.results || !last.results.length) return;
       document.getElementById('picked').textContent = '“' + last.sentence + '”';
       document.getElementById('empty').hidden = true;
+      document.getElementById('need-refs').hidden = true;
       document.getElementById('found').hidden = false;
       statusEl.textContent = '아까 찾은 관련 부분 ' + last.results.length + '곳이에요. 참고 문서를 더 넣었다면 같은 문장을 다시 드래그해 보세요.';
-      last.results.forEach((r) => cardsEl.appendChild(makeCard(r)));
+      last.results.forEach((r) => cardsEl.appendChild(makeCard(r, last.sentence)));
     })();
   </script>
 

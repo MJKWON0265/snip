@@ -218,6 +218,13 @@
     .gate small { font-size: 14px; color: #b3261e; }
 
     [hidden] { display: none !important; }
+
+    /* 읽기 화면 위에 팝업으로 열렸을 때: 머리글·단계 표시·이전 버튼을 감추고 여백을 줄여요 */
+    body.embed { min-height: 0; background: var(--bg); }
+    body.embed header, body.embed #steps, body.embed #back { display: none !important; }
+    body.embed .frame { margin: 0; border: none; }
+    body.embed .page { padding: 28px 28px 32px; gap: 22px; }
+    body.embed .page-title { font-size: 26px; }
     button.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
     @media (max-width: 700px) {
@@ -350,7 +357,7 @@
       </div>
 
       <div class="actions">
-        <a class="btn btn-ghost" href="upload.html">← 이전</a>
+        <a class="btn btn-ghost" href="upload.html" id="back">← 이전</a>
         <button type="button" class="btn" id="connect" disabled>폴더를 골라 주세요</button>
         <a class="btn" href="reader.html" id="next" hidden>읽기 화면으로 →</a>
       </div>
@@ -762,7 +769,8 @@
           if (mode === 'upload') { uploads.length = 0; renderUploads(); }
           if (mode === 'files') { pickedFiles.clear(); renderFileBasket(); searchFileNames(); }
           if (mode === 'keyword') { keywordFiles.clear(); keywordRows.forEach(({ btn }) => setSelected(btn, false)); }
-          // 읽기 화면에서 "더 넣기"로 왔고, 내 컴퓨터 파일이면 기다릴 것 없이 바로 돌아가요.
+          // 내 컴퓨터 파일은 바로 담기니까, 읽기 화면 위 팝업이면 기다릴 것 없이 닫고 돌아가요.
+          if (mode === 'upload' && embedded) { done(); return; }
           if (mode === 'upload' && cameFromReader) { location.href = 'reader.html'; return; }
         }
       } catch (e) {
@@ -778,6 +786,20 @@
     // 담아 둔 문서는 계속 남아 있어요. 여기서 하나씩 빼거나 모두 비울 수 있어요.
     const shelfEl = document.getElementById('shelf');
     const cameFromReader = /[?&]from=reader/.test(location.search);
+
+    // 읽기 화면 위 팝업(iframe)으로 열렸는지. 그럴 땐 "다 넣었어요"를 누르면 팝업을 닫고 읽던 화면으로 돌아가요.
+    const embedded = /[?&]embed=1/.test(location.search) && window.parent !== window;
+    function done() {
+      window.parent.postMessage({ type: 'snip-refs-done' }, location.origin);
+    }
+    if (embedded) {
+      document.body.classList.add('embed');
+      ['shelf-go', 'next'].forEach((id) => {
+        const btn = document.getElementById(id);
+        btn.textContent = '다 넣었어요 →';
+        btn.addEventListener('click', (e) => { e.preventDefault(); done(); });
+      });
+    }
     function renderShelf() {
       const lib = SnipGoogle.getLibrary();
       const docs = lib && lib.docs ? lib.docs : [];

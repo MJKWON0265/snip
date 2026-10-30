@@ -1,6 +1,6 @@
 // 여러 화면이 함께 쓰는 "지금 하는 작업" 도우미예요.
 // - 읽을 문서와 참고 문서함을 이 브라우저에 보관해서, 단계를 오가거나 다음에 다시 와도 이어서 할 수 있어요.
-// - 화면 맨 위의 단계 표시(① 읽을 문서 ② 참고할 문서 ③ 드래그해서 찾기)를 그려요. 눌러서 자유롭게 오가요.
+// - 화면 맨 위의 단계 표시(① 읽을 문서 ② 읽으며 찾기)를 그려요. 눌러서 자유롭게 오가요.
 // js/google.js 다음에 불러와야 해요. (참고 문서함은 SnipGoogle이 보관해요)
 
 (function () {
@@ -27,6 +27,8 @@
       try { sessionStorage.setItem(DOC_KEY, JSON.stringify(doc)); } catch (e2) {}
     }
     try { sessionStorage.removeItem('snip-results'); sessionStorage.removeItem('snip-page'); } catch (e) {}
+    // 다른 문서를 읽기 시작하면 예전 문서에서 모아 둔 참고 내용은 비워요.
+    try { localStorage.removeItem('snip-picks'); } catch (e) {}
   }
 
   // 처음부터 새로 시작할 때 써요. 읽을 문서, 참고 문서함, 찾은 결과를 모두 비워요.
@@ -34,7 +36,7 @@
     [localStorage, sessionStorage].forEach((s) => {
       try { s.removeItem(DOC_KEY); } catch (e) {}
     });
-    try { sessionStorage.removeItem('snip-results'); sessionStorage.removeItem('snip-page'); } catch (e) {}
+    try { sessionStorage.removeItem('snip-results'); sessionStorage.removeItem('snip-page'); localStorage.removeItem('snip-picks'); } catch (e) {}
     if (window.SnipGoogle) SnipGoogle.clearLibrary();
   }
 
@@ -67,7 +69,7 @@
     location.href = 'reader.html';
   }
 
-  // 단계 표시를 그려요. current: 지금 화면의 단계 (1, 2, 3)
+  // 단계 표시를 그려요. current: 지금 화면의 단계 (1: 읽을 문서, 2: 읽으며 찾기)
   function renderSteps(nav, current) {
     const doc = getDoc();
     const refs = libraryCount();
@@ -78,14 +80,9 @@
         done: doc && doc.text ? doc.title : '',
       },
       {
-        n: 2, href: 'folder.html', title: '참고할 문서',
-        hint: 'snip이 뒤져볼 내 자료들',
-        done: refs ? refs + '개 담김' : '',
-      },
-      {
-        n: 3, href: 'reader.html', title: '드래그해서 찾기',
-        hint: '문장을 끌면 관련 부분이 모여요',
-        done: '',
+        n: 2, href: 'reader.html', title: '읽으며 찾기',
+        hint: '참고 문서를 넣고 문장을 드래그해요',
+        done: refs ? '참고 문서 ' + refs + '개' : '',
         locked: !(doc && doc.text),
       },
     ];
