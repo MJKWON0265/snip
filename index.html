@@ -27,7 +27,7 @@
       letter-spacing: -0.02em;
       text-transform: uppercase;
     }
-    .hero-title h1 .accent { color: var(--orange); }
+    .hero-title h1 .accent { color: var(--accent); }
 
     /* "SNIP" 글자에 드래그하듯 왼쪽부터 칠해지는 하이라이트 */
     .snip {
@@ -42,7 +42,7 @@
       top: 0.06em;
       bottom: 0.02em;
       width: 0;
-      background: var(--orange-soft);
+      background: var(--accent-soft);
       z-index: -1;
       animation: drag-select 1.1s 0.6s cubic-bezier(0.6, 0, 0.3, 1) forwards;
     }
@@ -54,7 +54,7 @@
       top: 0.02em;
       bottom: -0.02em;
       width: 4px;
-      background: var(--orange);
+      background: var(--accent);
       animation: drag-cursor 1.1s 0.6s cubic-bezier(0.6, 0, 0.3, 1) forwards,
                  blink 1s 1.7s steps(1) infinite;
     }
@@ -93,7 +93,7 @@
     }
     .start .desc em {
       font-style: normal;
-      color: var(--orange);
+      color: var(--accent);
     }
     .btn-lg {
       display: inline-flex;
@@ -103,7 +103,7 @@
       font-weight: 500;
       padding: 26px 44px;
       white-space: nowrap;
-      box-shadow: 0 10px 0 -2px rgba(255, 107, 26, 0.25);
+      box-shadow: 0 10px 0 -2px rgba(79, 70, 229, 0.25);
     }
     .btn-lg .g {
       width: 32px;
@@ -195,13 +195,13 @@
     /* 드래그한 만큼 칠해지는 형광펜: --p 값(0~100%)만큼 칠해요 */
     .hl {
       --p: 0%;
-      background: linear-gradient(var(--orange-soft), var(--orange-soft)) no-repeat;
+      background: linear-gradient(var(--accent-soft), var(--accent-soft)) no-repeat;
       background-size: var(--p) 100%;
       box-decoration-break: clone;
       -webkit-box-decoration-break: clone;
       padding: 2px 0;
     }
-    .hl.done { border-bottom: 2px solid var(--orange); }
+    .hl.done { border-bottom: 2px solid var(--accent); }
     .demo-find {
       position: absolute;
       background: var(--ink);
@@ -215,7 +215,7 @@
       pointer-events: none;
     }
     .demo-find.show { opacity: 1; transform: none; }
-    .demo-find.press { background: var(--orange); color: var(--ink); }
+    .demo-find.press { background: var(--accent); color: #fff; }
     .cursor {
       position: absolute;
       left: 0;
@@ -248,7 +248,7 @@
       color: #777;
       transition: color 0.2s;
     }
-    .scan span.lit { color: var(--orange); }
+    .scan span.lit { color: var(--accent-on-dark); }
     .scan.gone { display: none; }
     .dcard {
       border: 1px solid #3a3a3a;
@@ -259,7 +259,7 @@
       transition: opacity 0.45s, transform 0.45s;
     }
     .dcard.show { opacity: 1; transform: none; }
-    .dcard .file { font-family: var(--mono); font-size: 12px; color: var(--orange); margin-bottom: 6px; }
+    .dcard .file { font-family: var(--mono); font-size: 12px; color: var(--accent-on-dark); margin-bottom: 6px; }
     .dcard .text { font-size: 14px; line-height: 1.6; color: #eee; word-break: keep-all; }
     .dcard .tip { font-size: 12px; color: #aaa; margin-top: 8px; }
 
@@ -275,7 +275,7 @@
       font-family: var(--mono);
     }
     .step:last-child { border-right: none; }
-    .step .num { color: var(--orange-ink); font-size: 14px; margin-bottom: 8px; }
+    .step .num { color: var(--accent-ink); font-size: 14px; margin-bottom: 8px; }
     .step .name { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
     .step .ko { font-family: var(--kr); font-size: 14px; color: var(--muted); }
 

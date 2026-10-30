@@ -27,7 +27,7 @@
     .tabs button.on {
       color: var(--ink);
       font-weight: 700;
-      border-bottom: 3px solid var(--orange);
+      border-bottom: 3px solid var(--accent);
     }
 
     /* 파일을 끌어다 놓는 칸 */
@@ -52,8 +52,8 @@
     }
     .drop b { font-size: 19px; font-weight: 500; }
     .drop small { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-    .drop.over { border-color: var(--orange); background: var(--orange-soft); }
-    .drop.ready { border-style: solid; border-color: var(--orange); }
+    .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+    .drop.ready { border-style: solid; border-color: var(--accent); }
     .drop small.error { color: #b3261e; }
 
     /* 텍스트 붙여넣기 칸 */
@@ -73,7 +73,7 @@
       line-height: 1.8;
       resize: vertical;
     }
-    .paste textarea:focus { outline: none; border-color: var(--orange); }
+    .paste textarea:focus { outline: none; border-color: var(--accent); }
     .paste small { font-family: var(--mono); font-size: 13px; color: var(--muted); text-align: right; }
     [hidden] { display: none !important; }
 
@@ -84,11 +84,11 @@
       gap: 16px;
       flex-wrap: wrap;
       padding: 18px 20px;
-      border: 1.5px solid var(--orange);
-      background: var(--orange-soft);
+      border: 1.5px solid var(--accent);
+      background: var(--accent-soft);
     }
     .current div { flex: 1; min-width: 200px; }
-    .current small { display: block; font-family: var(--mono); font-size: 12px; color: var(--orange-ink); margin-bottom: 4px; }
+    .current small { display: block; font-family: var(--mono); font-size: 12px; color: var(--accent-ink); margin-bottom: 4px; }
     .current b { font-size: 17px; word-break: keep-all; }
     .current .btn { padding: 12px 18px; font-size: 14px; }
   </style>
