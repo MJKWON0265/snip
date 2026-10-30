@@ -157,10 +157,10 @@ a.btn:not(.btn-ghost) { color: #fff; }
   clip: rect(0 0 0 0);
 }
 
-/* 화면 맨 위 단계 표시: ① 읽을 문서 ② 참고할 문서 ③ 드래그해서 찾기 (눌러서 오가요) */
+/* 화면 맨 위 단계 표시: ① 읽을 문서 ② 읽으며 찾기 (눌러서 오가요) */
 .stepper {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   border: 1.5px solid var(--ink);
   background: var(--panel);
 }
