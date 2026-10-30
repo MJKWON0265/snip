@@ -1,0 +1,128 @@
+/* 읽기 화면과 원본 보기에서 함께 쓰는 "원래 모양 그대로 보기" 꾸밈이에요. */
+
+/* ---------- 원래 모양 그대로 보기 (PDF·파워포인트·워드) ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--bg);
+  padding: 8px 0;
+}
+.pg-btn {
+  border: 1.5px solid var(--ink);
+  background: #fff;
+  font-family: var(--kr);
+  font-size: 15px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.pg-btn:disabled { opacity: 0.35; cursor: default; }
+.pg-info { font-family: var(--mono); font-size: 14px; min-width: 64px; text-align: center; }
+.viewer-note { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+.pdf-page {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+.pdf-page canvas { display: block; }
+/* PDF 위에 깔리는 투명한 글자 층: 보이지 않지만 드래그할 수 있어요 */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  line-height: 1;
+  text-align: initial;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+.textLayer span.markedContent { top: 0; height: 0; }
+.textLayer ::selection { background: rgba(255, 107, 26, 0.35); }
+.textLayer br::selection { background: transparent; }
+.textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: -1;
+  cursor: default;
+  user-select: none;
+}
+
+.pp-frame {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+.pp-slide {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background: #fff;
+  overflow: hidden;
+  font-family: var(--kr);
+}
+.pp-shape { position: absolute; }
+.pp-shape img { width: 100%; height: 100%; object-fit: fill; display: block; }
+.pp-text {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+.pp-p { margin: 0 0 0.2em; white-space: pre-wrap; }
+.pp-table { width: 100%; height: 100%; border-collapse: collapse; }
+.pp-table td { border: 1px solid #9a9a9a; vertical-align: top; }
+.pp-table .pp-text { padding: 2px 4px; }
+.pp-missing {
+  border: 1.5px dashed #b5b5b0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: #888;
+}
+
+.docx-page {
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  padding: 56px 64px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink);
+  word-break: keep-all;
+}
+.docx-page h1 { font-size: 26px; margin: 0.6em 0 0.4em; }
+.docx-page h1.doc-title { font-size: 30px; }
+.docx-page h2 { font-size: 21px; margin: 0.6em 0 0.4em; }
+.docx-page h3 { font-size: 18px; margin: 0.5em 0 0.3em; }
+.docx-page p { margin: 0 0 0.8em; color: var(--ink); font-size: 16px; }
+.docx-page ul, .docx-page ol { padding-left: 1.6em; margin: 0 0 0.8em; }
+.docx-page table { border-collapse: collapse; margin: 0 0 1em; width: 100%; }
+.docx-page td, .docx-page th { border: 1px solid #b5b5b0; padding: 6px 8px; vertical-align: top; }
+.docx-page img { max-width: 100%; height: auto; }
+
+/* 고른 문장 형광펜 (원래 모양 보기에서 쓰는 방법) */
+::highlight(snip-pick) { background-color: rgba(255, 107, 26, 0.35); }
+/* 원본 보기에서 관련 부분을 칠하는 형광펜 (Ctrl+F 검색 결과처럼) */
+::highlight(snip-hit) { background-color: rgba(255, 196, 0, 0.55); }
+
+@media (max-width: 900px) {
+  .docx-page { padding: 28px 20px; }
+}
+

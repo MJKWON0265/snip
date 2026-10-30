@@ -117,6 +117,28 @@
       font-size: 18px;
       color: #4285f4;
     }
+    .start-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+    .start-actions .btn-lg { justify-content: center; }
+    .try {
+      background: none;
+      border: none;
+      font-family: var(--kr);
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+    .resume {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      font-size: 14px;
+      max-width: 340px;
+    }
+    .resume[hidden] { display: none; }
+    .resume a { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .resume button { background: none; border: none; font-family: var(--kr); font-size: 14px; color: var(--muted); text-decoration: underline; cursor: pointer; white-space: nowrap; }
     .start .note {
       font-family: var(--mono);
       font-size: 13px;
@@ -306,8 +328,13 @@
 
     <section class="start">
       <p class="desc">궁금한 문장을 <em>드래그</em>하면,<br>내 컴퓨터와 드라이브 속 놓친 문서까지 찾아<br>참고할 부분을 보여드려요.</p>
-      <div>
+      <div class="start-actions">
         <a class="btn btn-lg" href="upload.html">시작하기 →</a>
+        <button type="button" class="try" data-sample>문서 없이 예시로 먼저 해 보기</button>
+        <div class="resume" id="resume" hidden>
+          <a href="reader.html" id="resume-link">이어서 하기</a>
+          <button type="button" id="fresh">처음부터 새로</button>
+        </div>
       </div>
     </section>
 
@@ -371,6 +398,25 @@
 
   </main>
 
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
+  <script src="js/steps.js"></script>
+  <script>
+    // 문서가 없어도 예시로 바로 드래그해 볼 수 있어요.
+    document.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', () => SnipWork.startSample()));
+    // 하던 작업이 남아 있으면 이어서 하거나, 모두 비우고 처음부터 새로 할 수 있어요.
+    (function () {
+      const doc = SnipWork.getDoc();
+      if (!doc || !doc.text) return;
+      const refs = SnipWork.libraryCount();
+      document.getElementById('resume').hidden = false;
+      document.getElementById('resume-link').textContent = '이어서 하기: ' + doc.title + (refs ? ' · 참고 ' + refs + '개' : '');
+      document.getElementById('fresh').addEventListener('click', () => {
+        SnipWork.clearAll();
+        location.href = 'upload.html';
+      });
+    })();
+  </script>
   <script>
     // 첫 화면 데모: 커서가 문장을 드래그 → "관련 내용 찾기" 클릭 → 참고 문서를 훑고 → 카드가 떠요. 계속 되풀이해요.
     (function () {

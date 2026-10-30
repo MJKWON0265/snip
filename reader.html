@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="viewer.css">
   <style>
     /* 왼쪽 문서 + 오른쪽 결과 칸 */
     .split {
@@ -46,129 +47,31 @@
     .doc-body ::selection { background: var(--orange-soft); }
     [hidden] { display: none !important; }
 
-    /* ---------- 원래 모양 그대로 보기 (PDF·파워포인트·워드) ---------- */
-    .pager {
+    /* 맨 위 단계 표시 줄 */
+    .steps-bar { padding: 16px 24px; border-bottom: 1px solid var(--line); }
+    /* 예시로 해 보는 중이라는 안내 */
+    .sample-note {
+      font-size: 15px;
+      line-height: 1.6;
+      background: var(--orange-soft);
+      border: 1px solid var(--orange);
+      padding: 12px 14px;
+      word-break: keep-all;
+    }
+    .sample-note a { color: var(--ink); font-weight: 700; }
+    /* 오른쪽 결과 칸 맨 위: 지금 참고 문서 + 더 넣기 */
+    .refs {
       display: flex;
       align-items: center;
       gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 4;
-      background: var(--bg);
-      padding: 8px 0;
-    }
-    .pg-btn {
-      border: 1.5px solid var(--ink);
+      flex-wrap: wrap;
       background: #fff;
-      font-family: var(--kr);
+      border: 1px solid var(--line);
+      padding: 12px 14px;
       font-size: 15px;
-      padding: 8px 14px;
-      cursor: pointer;
     }
-    .pg-btn:disabled { opacity: 0.35; cursor: default; }
-    .pg-info { font-family: var(--mono); font-size: 14px; min-width: 64px; text-align: center; }
-    .viewer-note { font-family: var(--mono); font-size: 13px; color: var(--muted); }
-
-    .pdf-page {
-      position: relative;
-      background: #fff;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-    }
-    .pdf-page canvas { display: block; }
-    /* PDF 위에 깔리는 투명한 글자 층: 보이지 않지만 드래그할 수 있어요 */
-    .textLayer {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      line-height: 1;
-      text-align: initial;
-      -webkit-text-size-adjust: none;
-      text-size-adjust: none;
-      forced-color-adjust: none;
-      transform-origin: 0 0;
-      z-index: 2;
-    }
-    .textLayer :is(span, br) {
-      color: transparent;
-      position: absolute;
-      white-space: pre;
-      cursor: text;
-      transform-origin: 0% 0%;
-    }
-    .textLayer span.markedContent { top: 0; height: 0; }
-    .textLayer ::selection { background: rgba(255, 107, 26, 0.35); }
-    .textLayer br::selection { background: transparent; }
-    .textLayer .endOfContent {
-      display: block;
-      position: absolute;
-      inset: 100% 0 0;
-      z-index: -1;
-      cursor: default;
-      user-select: none;
-    }
-
-    .pp-frame {
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-    }
-    .pp-slide {
-      position: absolute;
-      left: 0;
-      top: 0;
-      transform-origin: 0 0;
-      background: #fff;
-      overflow: hidden;
-      font-family: var(--kr);
-    }
-    .pp-shape { position: absolute; }
-    .pp-shape img { width: 100%; height: 100%; object-fit: fill; display: block; }
-    .pp-text {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 4px 8px;
-      line-height: 1.25;
-      word-break: keep-all;
-    }
-    .pp-p { margin: 0 0 0.2em; white-space: pre-wrap; }
-    .pp-table { width: 100%; height: 100%; border-collapse: collapse; }
-    .pp-table td { border: 1px solid #9a9a9a; vertical-align: top; }
-    .pp-table .pp-text { padding: 2px 4px; }
-    .pp-missing {
-      border: 1.5px dashed #b5b5b0;
-      display: grid;
-      place-items: center;
-      font-size: 14px;
-      color: #888;
-    }
-
-    .docx-page {
-      background: #fff;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-      padding: 56px 64px;
-      font-size: 16px;
-      line-height: 1.8;
-      color: var(--ink);
-      word-break: keep-all;
-    }
-    .docx-page h1 { font-size: 26px; margin: 0.6em 0 0.4em; }
-    .docx-page h1.doc-title { font-size: 30px; }
-    .docx-page h2 { font-size: 21px; margin: 0.6em 0 0.4em; }
-    .docx-page h3 { font-size: 18px; margin: 0.5em 0 0.3em; }
-    .docx-page p { margin: 0 0 0.8em; color: var(--ink); font-size: 16px; }
-    .docx-page ul, .docx-page ol { padding-left: 1.6em; margin: 0 0 0.8em; }
-    .docx-page table { border-collapse: collapse; margin: 0 0 1em; width: 100%; }
-    .docx-page td, .docx-page th { border: 1px solid #b5b5b0; padding: 6px 8px; vertical-align: top; }
-    .docx-page img { max-width: 100%; height: auto; }
-
-    /* 고른 문장 형광펜 (원래 모양 보기에서 쓰는 방법) */
-    ::highlight(snip-pick) { background-color: rgba(255, 107, 26, 0.35); }
-
-    @media (max-width: 900px) {
-      .docx-page { padding: 28px 20px; }
-    }
+    .refs span { flex: 1; min-width: 160px; }
+    .refs a { color: var(--ink); font-weight: 500; white-space: nowrap; }
 
     /* 아직 드래그하기 전 결과 칸 */
     .empty {
@@ -239,14 +142,16 @@
 
   <header>
     <a class="logo" href="index.html"><div class="logo-mark">S</div>snip</a>
-    <div class="meta">읽는 중: <span id="doc-name">3분기 기획안 피드백.docx</span> · 참고: <a href="folder.html" id="ref-name">고르기</a> · <a href="upload.html">다른 문서</a></div>
+    <div class="meta">읽는 중: <span id="doc-name">3분기 기획안 피드백.docx</span></div>
   </header>
 
   <main class="frame">
+    <div class="steps-bar"><nav id="steps"></nav></div>
     <div class="split">
 
       <article class="doc">
-        <div class="label"><span class="dot"></span>STEP 3 / 3 · 궁금한 문장을 드래그하세요</div>
+        <div class="label"><span class="dot"></span>궁금한 문장을 마우스로 드래그하세요</div>
+        <div class="sample-note" id="sample-note" hidden>지금은 <b>예시 문서</b>로 해 보는 중이에요. 아래 문장 아무거나 드래그해 보세요. 내 문서로 하려면 <a href="upload.html">① 읽을 문서</a>에서 넣어 주세요.</div>
         <h1 id="doc-title">3분기 기획안 피드백</h1>
         <div class="pager" id="pager" hidden></div>
         <div id="doc-body" class="doc-body">
@@ -259,9 +164,13 @@
       </article>
 
       <aside class="results" id="results">
+        <div class="refs">
+          <span id="ref-name">아직 참고 문서를 고르지 않았어요</span>
+          <a href="folder.html?from=reader" id="ref-add">+ 참고 문서 더 넣기</a>
+        </div>
         <div class="empty" id="empty">
           <b>왼쪽 문서에서 궁금한 문장을 드래그해 보세요</b>
-          <span>마우스로 문장을 쭉 끌어서 선택하면 "관련 내용 찾기" 버튼이 나타나요.</span>
+          <span>마우스로 문장을 쭉 끌어서 선택하면 "관련 내용 찾기" 버튼이 나타나요. 누르면 참고 문서들 속에서 관련 부분을 찾아 여기에 모아 줘요.</span>
         </div>
 
         <div id="found" hidden>
@@ -302,10 +211,13 @@
   <script src="js/google.js"></script>
   <script src="js/files.js"></script>
   <script src="js/viewer.js"></script>
+  <script src="js/steps.js"></script>
   <script>
-    // 1) 문서 넣기 화면에서 붙여넣은 글이 있으면 그걸 보여줘요. 없으면 예시 문서를 그대로 둬요.
-    let saved = null;
-    try { saved = JSON.parse(sessionStorage.getItem('snip-doc')); } catch (e) {}
+    SnipWork.renderSteps(document.getElementById('steps'), 3);
+
+    // 1) 문서 넣기 화면에서 넣은 글이 있으면 그걸 보여줘요. 없으면 예시 문서를 그대로 둬요.
+    const saved = SnipWork.getDoc();
+    if (saved && saved.sample) document.getElementById('sample-note').hidden = false;
     if (saved && saved.text) {
       document.getElementById('doc-title').textContent = saved.title;
       document.getElementById('doc-name').textContent = saved.title;
@@ -329,7 +241,14 @@
         const file = await SnipFiles.getReading();
         if (!file || (saved.fileName && file.name !== saved.fileName)) return;
         const textView = document.getElementById('doc-body').innerHTML;
-        const ok = await SnipViewer.render(file, document.getElementById('doc-body'), document.getElementById('pager')).then(() => true, (e) => {
+        // 참고 문서를 더 넣고 돌아오면, 보던 쪽부터 다시 보여줘요.
+        let page = null;
+        try { page = JSON.parse(sessionStorage.getItem('snip-page')); } catch (e) {}
+        const opts = {
+          start: page && page.name === file.name ? page.n : 1,
+          onShow: (n) => { try { sessionStorage.setItem('snip-page', JSON.stringify({ name: file.name, n })); } catch (e) {} },
+        };
+        const ok = await SnipViewer.render(file, document.getElementById('doc-body'), document.getElementById('pager'), opts).then((v) => Boolean(v), (e) => {
           document.getElementById('doc-body').innerHTML = textView;
           console.warn('원래 모양으로 그리지 못했어요', e);
           return false;
@@ -397,11 +316,14 @@
     const cardsEl = document.getElementById('cards');
     const examplesEl = document.getElementById('examples');
 
-    // 머리글에 지금 쓰는 참고 문서를 보여줘요. 누르면 다시 고를 수 있어요.
+    // 결과 칸 맨 위에 지금 쓰는 참고 문서를 보여줘요. 읽던 그대로 더 넣을 수 있어요.
     (function () {
       const lib = SnipGoogle.getLibrary();
       if (lib && lib.docs && lib.docs.length) {
-        document.getElementById('ref-name').textContent = lib.source + ' (' + lib.docs.length + '개)';
+        const names = lib.docs.slice(0, 2).map((d) => d.name).join(', ');
+        document.getElementById('ref-name').textContent = '참고 문서 ' + lib.docs.length + '개' + (lib.sample ? ' (예시)' : '') + ' · ' + names + (lib.docs.length > 2 ? ' 외' : '');
+      } else {
+        document.getElementById('ref-add').textContent = '+ 참고 문서 고르기';
       }
     })();
 
@@ -418,7 +340,7 @@
         statusEl.className = 'note error';
         statusEl.innerHTML = '';
         const link = document.createElement('a');
-        link.href = 'folder.html';
+        link.href = 'folder.html?from=reader';
         link.textContent = '참고할 문서 고르기 →';
         statusEl.append('아직 참고할 문서를 고르지 않았어요. ', link);
         cardsEl.innerHTML = '';
@@ -457,6 +379,8 @@
         }
         statusEl.textContent = '관련 부분 ' + data.results.length + '곳을 찾았어요.';
         data.results.forEach((r) => cardsEl.appendChild(makeCard(r)));
+        // 참고 문서를 더 넣으러 갔다 와도 방금 찾은 결과가 남아 있게 보관해요.
+        try { sessionStorage.setItem('snip-results', JSON.stringify({ sentence, results: data.results })); } catch (e) {}
       } catch (e) {
         // 내 컴퓨터에서 파일로 열었거나 미리보기에서는 백엔드가 없어서 예시 카드를 보여줘요.
         statusEl.textContent = '아직 AI(백엔드)가 연결되지 않은 곳에서 열려서 예시 카드를 보여드려요.';
@@ -484,15 +408,28 @@
       b.textContent = '이렇게 참고해 보세요';
       tip.append(b, document.createElement('br'), r.tip);
       // 원본은 새 탭으로 열어서, 읽던 문서가 이 탭에 그대로 남아 있게 해요.
-      // 새 탭은 이 탭의 sessionStorage를 못 읽어서, 고른 카드는 localStorage에 넣어 전해줘요.
+      // 고른 카드는 localStorage에 넣어 전해줘요. window.open으로 열면 구글 로그인도 새 탭에 이어져요.
       const link = add('a', 'open', '원본에서 이 부분 보기 ↗ (새 탭)');
       link.href = 'original.html';
       link.target = '_blank';
-      link.addEventListener('click', () => {
-        try { localStorage.setItem('snip-hit', JSON.stringify(r)); } catch (e) {}
+      link.addEventListener('click', (e) => {
+        try { localStorage.setItem('snip-hit', JSON.stringify(r)); } catch (err) {}
+        if (window.open('original.html', '_blank')) e.preventDefault();
       });
       return card;
     }
+
+    // 5) 아까 찾은 결과가 있으면 다시 보여줘요. (참고 문서를 더 넣고 돌아왔을 때)
+    (function () {
+      let last = null;
+      try { last = JSON.parse(sessionStorage.getItem('snip-results')); } catch (e) {}
+      if (!last || !last.results || !last.results.length) return;
+      document.getElementById('picked').textContent = '“' + last.sentence + '”';
+      document.getElementById('empty').hidden = true;
+      document.getElementById('found').hidden = false;
+      statusEl.textContent = '아까 찾은 관련 부분 ' + last.results.length + '곳이에요. 참고 문서를 더 넣었다면 같은 문장을 다시 드래그해 보세요.';
+      last.results.forEach((r) => cardsEl.appendChild(makeCard(r)));
+    })();
   </script>
 
 </body>

@@ -154,6 +154,21 @@
       font-size: 14px;
       cursor: pointer;
     }
+    /* 지금 참고 문서함: 이미 담아 둔 문서들 */
+    .shelf {
+      border: 1.5px solid var(--orange);
+      background: var(--panel);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .shelf-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .shelf-head b { flex: 1; font-size: 17px; }
+    .shelf-head button { background: none; border: none; font-family: var(--kr); font-size: 14px; color: var(--muted); text-decoration: underline; cursor: pointer; }
+    .shelf-head .btn { padding: 12px 18px; font-size: 14px; }
+    .shelf .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .shelf small { font-size: 13px; color: var(--muted); }
     .chip.error { background: #fdecea; border-color: #b3261e; cursor: default; }
 
     /* 내 컴퓨터 파일 끌어다 놓는 칸 */
@@ -221,9 +236,20 @@
 
   <main class="frame">
     <div class="page">
-      <div class="label"><span class="dot"></span>STEP 2 / 3 · 참고할 문서 고르기</div>
-      <h1 class="page-title">참고할 문서를 어디서 불러올까요?</h1>
-      <p class="page-sub">예전 기획안, 논문, 수업 자료처럼 참고하고 싶은 문서를 골라 주세요. 그 안에서 관련 부분을 찾아드려요.</p>
+      <nav id="steps"></nav>
+      <h1 class="page-title" id="title">snip이 뒤져볼 참고 문서를 골라 주세요</h1>
+      <p class="page-sub">읽을 문서에서 문장을 드래그하면, 여기서 고른 문서들 속에서 관련 부분을 찾아 모아 줘요. 예전 기획서, 모아 둔 논문, 수업 자료처럼 참고하고 싶은 문서를 여러 개 담아 주세요.</p>
+
+      <!-- 이미 담아 둔 참고 문서. 여기서 빼거나, 아래에서 더 담을 수 있어요. -->
+      <div class="shelf" id="shelf" hidden>
+        <div class="shelf-head">
+          <b id="shelf-title">지금 참고 문서함</b>
+          <button type="button" id="shelf-clear">모두 비우기</button>
+          <a class="btn" href="reader.html" id="shelf-go">이대로 읽기 화면으로 →</a>
+        </div>
+        <div class="chips" id="shelf-chips"></div>
+        <small id="shelf-room"></small>
+      </div>
 
       <!-- 먼저 큰 두 갈래: 내 컴퓨터 / 구글 드라이브 -->
       <div class="source">
@@ -326,7 +352,7 @@
       <div class="actions">
         <a class="btn btn-ghost" href="upload.html">← 이전</a>
         <button type="button" class="btn" id="connect" disabled>폴더를 골라 주세요</button>
-        <a class="btn" href="reader.html" id="next" hidden>문서 열기 →</a>
+        <a class="btn" href="reader.html" id="next" hidden>읽기 화면으로 →</a>
       </div>
     </div>
   </main>
@@ -334,6 +360,7 @@
   <script src="js/config.js"></script>
   <script src="js/google.js"></script>
   <script src="js/files.js"></script>
+  <script src="js/steps.js"></script>
   <script>
     // 내 컴퓨터에서 올리는 사람은 로그인 없이 쓰고,
     // 구글 드라이브 방법을 고른 사람만 그때 구글 로그인을 해요.
@@ -386,17 +413,8 @@
       return document.querySelector('input[name="scope"]:checked').value;
     }
 
-    // 지금 고른 것을 한 줄 글자로 만들어요. 읽어 온 뒤 고른 것이 바뀌면 "문서 열기"를 다시 감추려고 써요.
-    let builtKey = null;
-    function selectionKey() {
-      const mode = scope();
-      if (mode === 'upload') return mode + ':' + uploads.filter((u) => u.paragraphs).map((u) => u.name).join('|');
-      if (mode === 'folder') return mode + ':' + (selectedFolder ? selectedFolder.id : '');
-      return mode + ':' + Array.from((mode === 'files' ? pickedFiles : keywordFiles).keys()).join('|');
-    }
-
     function updateButton() {
-      nextBtn.hidden = !builtKey || builtKey !== selectionKey();
+      nextBtn.hidden = busy || !SnipWork.libraryCount();
       const n = {
         upload: uploads.filter((u) => u.paragraphs).length,
         files: pickedFiles.size,
@@ -404,13 +422,13 @@
       };
       const mode = scope();
       if (mode === 'folder') {
-        connectBtn.textContent = selectedFolder ? '"' + selectedFolder.name + '" 읽어 오기' : '폴더를 골라 주세요';
+        connectBtn.textContent = selectedFolder ? '"' + selectedFolder.name + '" 폴더 담기' : '폴더를 골라 주세요';
         connectBtn.disabled = !selectedFolder;
       } else if (mode === 'upload') {
-        connectBtn.textContent = n.upload ? '올린 파일 ' + n.upload + '개로 시작하기' : '파일을 올려 주세요';
+        connectBtn.textContent = n.upload ? '올린 파일 ' + n.upload + '개 담기' : '파일을 올려 주세요';
         connectBtn.disabled = !n.upload;
       } else {
-        connectBtn.textContent = n[mode] ? '고른 문서 ' + n[mode] + '개 읽어 오기' : '문서를 골라 주세요';
+        connectBtn.textContent = n[mode] ? '고른 문서 ' + n[mode] + '개 담기' : '문서를 골라 주세요';
         connectBtn.disabled = !n[mode];
       }
     }
@@ -673,7 +691,7 @@
       const words = {
         'no-download': '주인이 다운로드를 막아 둔 문서',
         'too-big': '너무 큰 문서',
-        'over-limit': '한 번에 읽을 수 있는 양(약 12만 자)을 넘은 문서',
+        'over-limit': '참고 문서함이 꽉 차서(최대 ' + SnipGoogle.MAX_DOCS + '개 · 약 12만 자) 못 담은 문서',
         'empty': '글자가 없는 문서',
         'api-off-slides': '프레젠테이션 읽기 기능(Google Slides API)이 꺼져 있어 못 읽은 문서',
         'api-off-docs': '문서 읽기 기능(Google Docs API)이 꺼져 있어 못 읽은 문서',
@@ -693,14 +711,13 @@
       progress.hidden = false;
       bar.style.width = '0%';
       connectBtn.disabled = true;
-      builtKey = null;
-      SnipGoogle.clearLibrary();
       nextBtn.hidden = true;
       busy = true;
       try {
-        let lib;
+        let added;
         if (mode === 'upload') {
           sub.textContent = '내 컴퓨터에서 올린 파일은 이 브라우저에만 저장돼요.';
+          const room = SnipGoogle.libraryRoom();
           const docs = [];
           const originals = [];
           let total = 0;
@@ -708,54 +725,99 @@
           const stamp = Date.now();
           uploads.filter((u) => u.paragraphs).forEach((u, i) => {
             const size = u.paragraphs.join('\n').length;
-            if (docs.length >= SnipGoogle.MAX_DOCS || total + size > SnipGoogle.MAX_TOTAL_CHARS) { skipped++; return; }
+            if (docs.length >= room.docs || total + size > room.chars) { skipped++; return; }
             total += size;
             const id = 'local-' + stamp + '-' + i;
             docs.push({ id, name: u.name, link: '', paragraphs: u.paragraphs });
             originals.push({ id, file: u.file });
           });
-          // 원본 파일은 "원본 파일 열기"용으로 따로 보관해요. 실패해도 찾기에는 지장 없어요.
+          // 원본 파일은 "원본 보기"용으로 따로 보관해요. 실패해도 찾기에는 지장 없어요.
           try { await SnipFiles.saveOriginals(originals); } catch (e) {}
           bar.style.width = '100%';
-          lib = SnipGoogle.saveLibrary({ source: '내 컴퓨터 파일', docs, skipped, at: stamp });
-          // 내 컴퓨터 파일은 바로 읽혀서 기다릴 필요 없이 읽기 화면으로 가요.
-          if (docs.length) {
-            location.href = 'reader.html';
-            return;
-          }
+          added = { docs, skipped, problems: skipped ? { 'over-limit': skipped } : null };
         } else {
           sub.textContent = '구글 문서와 구글 프레젠테이션을 읽어요. 처음 한 번만 기다리면 돼요.';
           let source;
           if (mode === 'folder') source = { folderId: selectedFolder.id, label: selectedFolder.name };
           else if (mode === 'files') source = { files: Array.from(pickedFiles.values()), label: '고른 드라이브 문서' };
           else source = { files: Array.from(keywordFiles.values()), label: '키워드 "' + document.getElementById('keyword').value.trim() + '"' };
-          lib = await SnipGoogle.buildLibrary(source, (done, total, name) => {
+          added = await SnipGoogle.buildLibrary(source, (done, total, name) => {
             bar.style.width = total ? Math.round((done / total) * 100) + '%' : '100%';
             text.textContent = total
               ? '문서 읽는 중... ' + total + '개 중 ' + done + '개 완료' + (name ? ' · ' + name : '')
               : '읽을 문서를 찾는 중...';
           });
         }
-        const why = explainProblems(lib.problems);
-        if (!lib.docs.length) {
-          text.textContent = (mode === 'folder' && !lib.skipped
+        if (added.docs.length) SnipGoogle.addToLibrary(added);
+        const why = explainProblems(added.problems);
+        const already = added.already ? ' 이미 담겨 있던 문서 ' + added.already + '개는 건너뛰었어요.' : '';
+        if (!added.docs.length) {
+          text.textContent = (mode === 'folder' && !added.skipped && !added.already
             ? '여기에는 읽을 수 있는 문서가 없어요. 구글 문서나 구글 프레젠테이션이 있는 폴더를 골라 주세요.'
-            : '읽을 수 있는 문서가 없었어요.') + (why ? ' ' + why : '');
+            : '새로 담은 문서가 없어요.') + already + (why ? ' ' + why : '');
           bar.style.width = '0%';
         } else {
-          text.textContent = '완료! 문서 ' + lib.docs.length + '개를 읽었어요.' + (why ? ' ' + why : '');
-          builtKey = selectionKey();
+          text.textContent = '완료! 문서 ' + added.docs.length + '개를 담았어요. (참고 문서함에 모두 ' + SnipWork.libraryCount() + '개)' + already + (why ? ' ' + why : '');
+          // 다 담았으니 고른 표시는 비워요. 더 담고 싶으면 다시 고르면 돼요.
+          if (mode === 'upload') { uploads.length = 0; renderUploads(); }
+          if (mode === 'files') { pickedFiles.clear(); renderFileBasket(); searchFileNames(); }
+          if (mode === 'keyword') { keywordFiles.clear(); keywordRows.forEach(({ btn }) => setSelected(btn, false)); }
+          // 읽기 화면에서 "더 넣기"로 왔고, 내 컴퓨터 파일이면 기다릴 것 없이 바로 돌아가요.
+          if (mode === 'upload' && cameFromReader) { location.href = 'reader.html'; return; }
         }
       } catch (e) {
         text.textContent = e.message;
       } finally {
         busy = false;
+        renderShelf();
         updateButton();
       }
     });
 
-    // 예전에 골라 둔 참고 문서는 보여주지 않아요. 이번에 고른 것만 써요.
+    // ---------- 지금 참고 문서함 ----------
+    // 담아 둔 문서는 계속 남아 있어요. 여기서 하나씩 빼거나 모두 비울 수 있어요.
+    const shelfEl = document.getElementById('shelf');
+    const cameFromReader = /[?&]from=reader/.test(location.search);
+    function renderShelf() {
+      const lib = SnipGoogle.getLibrary();
+      const docs = lib && lib.docs ? lib.docs : [];
+      shelfEl.hidden = !docs.length;
+      SnipWork.renderSteps(document.getElementById('steps'), 2);
+      if (!docs.length) {
+        document.getElementById('title').textContent = 'snip이 뒤져볼 참고 문서를 골라 주세요';
+        return;
+      }
+      document.getElementById('title').textContent = '참고 문서를 더 담거나, 이대로 읽으러 가요';
+      document.getElementById('shelf-title').textContent = '지금 참고 문서함 · ' + docs.length + '개' + (lib.sample ? ' (예시)' : '');
+      const chips = document.getElementById('shelf-chips');
+      chips.innerHTML = '';
+      docs.forEach((d) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.textContent = d.name + ' ✕';
+        chip.title = '누르면 참고 문서함에서 빼요';
+        chip.addEventListener('click', () => {
+          SnipGoogle.removeFromLibrary(d.id);
+          renderShelf();
+          updateButton();
+        });
+        chips.appendChild(chip);
+      });
+      const room = SnipGoogle.libraryRoom();
+      document.getElementById('shelf-room').textContent = room.docs && room.chars > 2000
+        ? '아래에서 더 담을 수 있어요. (최대 ' + SnipGoogle.MAX_DOCS + '개 · 약 12만 자, 지금 ' + Math.round((1 - room.chars / SnipGoogle.MAX_TOTAL_CHARS) * 100) + '% 찼어요)'
+        : '참고 문서함이 꽉 찼어요. 더 담으려면 몇 개를 빼 주세요.';
+      document.getElementById('shelf-go').hidden = !SnipWork.getDoc();
+    }
+    document.getElementById('shelf-clear').addEventListener('click', () => {
+      SnipGoogle.clearLibrary();
+      renderShelf();
+      updateButton();
+    });
+
     showWho();
+    renderShelf();
     if (session) loadFolders();
     showPanel();
   </script>

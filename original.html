@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Tomorrow:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="viewer.css">
   <style>
     /* 맨 위 줄: 돌아가기 + 파일 이름 + 드라이브에서 열기 */
     .bar-top {
@@ -24,7 +25,7 @@
 
     .split {
       display: grid;
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: minmax(0, 1fr) 340px;
       min-height: calc(100vh - 160px);
     }
 
@@ -67,6 +68,18 @@
       cursor: pointer;
     }
     .side button.on { border: 2px solid var(--orange); }
+    .side .quote {
+      font-size: 15px;
+      line-height: 1.7;
+      background: #fff;
+      border-left: 4px solid #ffc400;
+      padding: 12px 14px;
+      word-break: keep-all;
+      max-height: 40vh;
+      overflow: auto;
+    }
+    .side .note { font-size: 14px; line-height: 1.6; color: var(--muted); word-break: keep-all; }
+    .doc .doc-body { display: flex; flex-direction: column; gap: 16px; }
     .doc .para { font-size: 17px; line-height: 1.85; color: var(--muted); word-break: keep-all; }
     .hit p { color: var(--ink); }
     [hidden] { display: none !important; }
@@ -109,31 +122,27 @@
     </div>
 
     <div class="split">
-      <article class="doc" id="doc">
-        <span class="where">… 4쪽 · 자동으로 관련 부분까지 내려왔어요</span>
-        <div class="ph" style="width: 88%"></div>
-        <div class="ph" style="width: 80%"></div>
-        <div class="hit">
-          <small>관련 부분</small>
-          <p>[관련 문단 전체: 형광펜으로 칠해진 상태]</p>
-        </div>
-        <div class="ph" style="width: 84%"></div>
-        <div class="ph" style="width: 76%"></div>
-        <div class="ph" style="width: 82%"></div>
-        <div class="ph" style="width: 58%"></div>
+      <article class="doc">
+        <span class="where" id="where">원본을 불러오는 중이에요...</span>
+        <div class="pager" id="pager" hidden></div>
+        <div id="doc" class="doc-body"></div>
       </article>
 
       <aside class="side">
-        <div class="label">이 파일의 관련 부분</div>
-        <button type="button" class="on">1. 4쪽 · 온보딩 단계 축소</button>
-        <button type="button">2. 7쪽 · 이탈률 데이터</button>
+        <div class="label">찾은 관련 부분</div>
+        <blockquote class="quote" id="quote"></blockquote>
+        <button type="button" id="go-hit" hidden>이 위치로 다시 가기</button>
+        <p class="note" id="note"></p>
       </aside>
     </div>
   </main>
 
   <a class="btn float-open" id="float-open" href="https://drive.google.com" target="_blank" rel="noopener">구글 드라이브에서 원본 열기 ↗</a>
 
+  <script src="js/config.js"></script>
+  <script src="js/google.js"></script>
   <script src="js/files.js"></script>
+  <script src="js/viewer.js"></script>
   <script>
     // 내 컴퓨터에서 올린 파일이면, 이 브라우저에 보관해 둔 원본 파일을 열 수 있게 해요.
     // PDF와 텍스트는 새 탭에서 바로 보이고, 워드(.docx)는 내려받아져서 워드로 열려요.
@@ -155,7 +164,7 @@
       });
     }
 
-    // 결과 카드에서 고른 문단이 있으면, 그 파일 전체를 보여주고 해당 문단을 형광펜으로 칠해요.
+    // 결과 카드에서 고른 부분을 받아와요.
     let hit = null;
     try { hit = JSON.parse(localStorage.getItem('snip-hit')); } catch (e) {}
 
@@ -166,22 +175,62 @@
       window.close();
       setTimeout(() => { location.href = 'reader.html'; }, 200);
     });
-    if (hit && Array.isArray(hit.paragraphs)) {
-      document.getElementById('file-name').textContent = hit.file;
-      // 위쪽 버튼과 오른쪽 아래 떠 있는 버튼은 같은 원본으로 이어져요.
-      const openButtons = [document.getElementById('drive-link'), document.getElementById('float-open')];
-      if (hit.link) {
-        openButtons.forEach((b) => { b.href = hit.link; });
-      } else {
-        openButtons.forEach((b) => { b.hidden = true; });
-        openLocalOriginal(hit, openButtons);
+
+    const docEl = document.getElementById('doc');
+    const whereEl = document.getElementById('where');
+    const noteEl = document.getElementById('note');
+    const goBtn = document.getElementById('go-hit');
+
+    // 원본 파일을 구해요. 내 컴퓨터 파일은 이 브라우저에 보관해 둔 것을, 드라이브 문서는 PDF로 받아요.
+    async function getOriginalFile() {
+      if (!hit.id) return { why: '예시 문서는 원본 파일이 없어서 글자로 보여드려요.' };
+      if (hit.id.startsWith('local-')) {
+        let file = null;
+        try { file = await SnipFiles.getOriginal(hit.id); } catch (e) {}
+        return file ? { file } : { why: '이 브라우저에 원본 파일이 남아 있지 않아 글자로 보여드려요.' };
       }
-      const doc = document.getElementById('doc');
-      doc.innerHTML = '';
-      const where = document.createElement('span');
-      where.className = 'where';
-      where.textContent = '자동으로 관련 부분까지 내려왔어요';
-      doc.appendChild(where);
+      if (hit.id.startsWith('sample-')) return { why: '예시 문서는 원본 파일이 없어서 글자로 보여드려요.' };
+      if (!SnipGoogle.getSession()) return { why: '구글 로그인이 끝나서 글자로 보여드려요. 읽기 화면에서 다시 로그인하면 원래 모양으로 볼 수 있어요.' };
+      try {
+        return { file: await SnipGoogle.downloadPdf({ id: hit.id, name: hit.file }) };
+      } catch (e) {
+        return { why: '드라이브에서 원본을 받지 못해 글자로 보여드려요. (' + e.message + ')' };
+      }
+    }
+
+    // 원래 모양으로 그린 뒤, 관련 부분이 있는 쪽을 찾아 넘기고 형광펜으로 칠해요. (Ctrl+F 검색 결과처럼)
+    async function showOriginal(file, target) {
+      let lastMark = null;
+      const scrollToMark = () => {
+        if (!lastMark) return;
+        const box = lastMark.getBoundingClientRect();
+        window.scrollTo({ top: window.scrollY + box.top - window.innerHeight / 3, behavior: 'smooth' });
+      };
+      const viewer = await SnipViewer.render(file, docEl, document.getElementById('pager'), {
+        onShow: () => { lastMark = SnipViewer.mark(docEl, target); },
+      });
+      if (!viewer) return false;
+      const page = await SnipViewer.findPage(viewer, target);
+      if (page > 1) await viewer.show(page);
+      else lastMark = SnipViewer.mark(docEl, target);
+      if (lastMark) {
+        whereEl.textContent = (viewer.total > 1 ? page + '쪽 · ' : '') + '관련 부분을 노란 형광펜으로 칠해 뒀어요';
+        goBtn.hidden = false;
+        goBtn.textContent = viewer.total > 1 ? page + '쪽 관련 부분으로 다시 가기' : '관련 부분으로 다시 가기';
+        goBtn.onclick = async () => {
+          if (viewer.current() !== page) await viewer.show(page);
+          scrollToMark();
+        };
+        setTimeout(scrollToMark, 200);
+      } else {
+        whereEl.textContent = '원본에서 정확한 위치를 찾지 못했어요. 오른쪽 관련 부분을 참고해 주세요.';
+      }
+      return true;
+    }
+
+    // 원본 파일이 없으면 예전처럼 문단을 글자로 늘어놓고 관련 문단을 칠해요.
+    function showText() {
+      docEl.innerHTML = '';
       let target = null;
       hit.paragraphs.forEach((text, i) => {
         if (i === hit.index) {
@@ -192,25 +241,52 @@
           const p = document.createElement('p');
           p.textContent = text;
           box.append(small, p);
-          doc.appendChild(box);
+          docEl.appendChild(box);
           target = box;
         } else {
           const p = document.createElement('p');
           p.className = 'para';
           p.textContent = text;
-          doc.appendChild(p);
+          docEl.appendChild(p);
         }
       });
-      const side = document.querySelector('.side');
-      side.querySelectorAll('button').forEach((b) => b.remove());
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'on';
-      btn.textContent = (hit.index + 1) + '번째 문단 · ' + hit.excerpt.slice(0, 24) + '…';
-      btn.addEventListener('click', () => target.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-      side.appendChild(btn);
-      if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+      whereEl.textContent = '자동으로 관련 부분까지 내려왔어요';
+      if (target) {
+        goBtn.hidden = false;
+        goBtn.textContent = '관련 부분으로 다시 가기';
+        goBtn.onclick = () => target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+      }
     }
+
+    (async () => {
+      if (!hit || !Array.isArray(hit.paragraphs)) {
+        whereEl.textContent = '보여줄 관련 부분이 없어요. 읽기 화면에서 카드의 "원본에서 이 부분 보기"를 눌러 주세요.';
+        return;
+      }
+      document.getElementById('file-name').textContent = hit.file;
+      const target = hit.paragraphs[hit.index] || hit.excerpt || '';
+      document.getElementById('quote').textContent = target;
+      // 위쪽 버튼과 오른쪽 아래 떠 있는 버튼은 같은 원본으로 이어져요.
+      const openButtons = [document.getElementById('drive-link'), document.getElementById('float-open')];
+      if (hit.link) {
+        openButtons.forEach((b) => { b.href = hit.link; });
+      } else {
+        openButtons.forEach((b) => { b.hidden = true; });
+        openLocalOriginal(hit, openButtons);
+      }
+      const got = await getOriginalFile();
+      let shown = false;
+      if (got.file) {
+        try { shown = await showOriginal(got.file, target); } catch (e) { console.warn('원래 모양으로 그리지 못했어요', e); }
+      }
+      if (!shown) {
+        showText();
+        noteEl.textContent = got.why || '이 파일은 원래 모양으로 그리지 못해서 글자로 보여드려요.';
+      } else {
+        noteEl.textContent = '원본 문서를 원래 모양 그대로 보여드려요.' + (document.getElementById('pager').hidden ? '' : ' 다른 쪽도 넘겨 볼 수 있어요.');
+      }
+    })();
   </script>
 
 </body>
